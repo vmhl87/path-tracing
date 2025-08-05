@@ -53,91 +53,51 @@ struct node{
 
 };
 
-#define split for(node &c : n.child) if(c.s == "")
+#define handle(type) type handle_##type(node &n){ \
+	type res; \
+	for(node &c : n.child) if(c.s == ""){
+
+#define end } return res; }
+
+#define case(x) }else if(c.s == "##x##"){ res. x =
+
+handle(dir)
+	case(f) c.read_vec(1);
+	case(f) c.read_vec(1);
+end;
+
+handle(cam)
+	case(p) c.read_vec(1);
+	case(d) handle_dir(c);
+	case(w) c.read_int(1);
+	case(h) c.read_int(1);
+	case(c) c.read_double(1);
+end;
+
+handle(material)
+	case(c) c.read_vec(1);
+	case(shine) c.read_double(1);
+end;
+
+handle(sphere)
+	case(p) c.read_vec(1);
+	case(r) c.read_double(1);
+	case(mat) handle_material(c);
+end;
+
+#undef handle
+#undef case
+#undef end
+
 #define case(x) }else if(c.s == "##x##"){
 
-void handle_dir(node &n){
-	dir d;
-	
-	split{
-		case(f)
-			d.f = c.read_vec(1);
-
-		case(f)
-			d.u = c.read_vec(1);
-	}
-
-	dir *D = new dir; *D = d;
-	n.dat = (void*) D;
-}
-
-void handle_camera(node &n){
-	split{
-		case(p)
-			camera.p = c.read_vec(1);
-
-		case(d)
-			handle_dir(c);
-			camera.d = *((dir*) c.dat);
-
-		case(w)
-			camera.w = c.read_int(1);
-
-		case(h)
-			camera.h = c.read_int(1);
-
-		case(c)
-			camera.c = c.read_double(1);
-	}
-}
-
-void handle_mat(node &n){
-	material m;
-
-	split{
-		case(c)
-			m.c = c.read_vec(1);
-
-		case(shine)
-			m.shine = c.read_double(1);
-	}
-
-	material *M = new material; *M = m;
-	n.dat = (void*) M;
-}
-
-void handle_sphere(node &n){
-	sphere s;
-
-	split{
-		case(p)
-			s.p = c.read_vec(1);
-
-		case(r)
-			s.r = c.read_double(1);
-
-		case(mat)
-			handle_mat(c);
-			s.mat = *((material*) c.dat);
-	}
-
-	spheres.push_back(s);
-}
-
-#undef split
-#define split if(c.s == "")
-
 void handle(node &c){
-	split{
-		case(camera)
-			handle_camera(c);
-
-		case(sphere)
-			handle_sphere(c);
+	if(c.s == ""){
+		case(camera) camera = handle_cam(c);
+		case(sphere) spheres.push_back(handle_sphere(c));
 	}
 }
 
-#undef split
 #undef case
 
 int main(){

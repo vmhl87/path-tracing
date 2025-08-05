@@ -13,4 +13,4 @@ struct sphere{
 
 std::vector<sphere> spheres;
 
-camera camera;
+cam camera;

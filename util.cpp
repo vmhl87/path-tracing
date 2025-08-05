@@ -112,7 +112,7 @@ struct dir{
 	vec f, u;
 };
 
-struct camera{
+struct cam{
 	vec p;
 	dir d;
 	int w, h;
