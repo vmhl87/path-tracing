@@ -1,9 +1,10 @@
-all: render format convert
+all: run .proc convert
 
-render: *.cpp
+run: *.cpp
 	g++ render.cpp -o ./run -lm -march=native -Wall
 
-format: scene.conf
+.proc: scene.conf run
+	touch .proc
 	cat format.sh | rg -v "^\s*$$"
 	bash format.sh
 

@@ -12,4 +12,4 @@ cat template.md | \
 		sed s/\ $// \
 	)/" | \
 
-	tee README.md | sed s/^$$//
+	tee README.md | rg -v "^\s*$"

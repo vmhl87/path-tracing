@@ -57,17 +57,18 @@ struct node{
 #define case(x) }else if(c.s == "##x##"){
 
 void handle_dir(node &n){
-	dir *d = new dir;
+	dir d;
 	
 	split{
 		case(f)
-			d->f = c.read_vec(1);
+			d.f = c.read_vec(1);
 
 		case(f)
-			d->u = c.read_vec(1);
+			d.u = c.read_vec(1);
 	}
 
-	n.dat = (void*) d;
+	dir *D = new dir; *D = d;
+	n.dat = (void*) D;
 }
 
 void handle_camera(node &n){
@@ -90,9 +91,37 @@ void handle_camera(node &n){
 	}
 }
 
-void handle_sphere(node &n){
+void handle_mat(node &n){
+	material m;
+
 	split{
+		case(c)
+			m.c = c.read_vec(1);
+
+		case(shine)
+			m.shine = c.read_double(1);
 	}
+
+	material *M = new material; *M = m;
+	n.dat = (void*) M;
+}
+
+void handle_sphere(node &n){
+	sphere s;
+
+	split{
+		case(p)
+			s.p = c.read_vec(1);
+
+		case(r)
+			s.r = c.read_double(1);
+
+		case(mat)
+			handle_mat(c);
+			s.mat = *((material*) c.dat);
+	}
+
+	spheres.push_back(s);
 }
 
 #undef split

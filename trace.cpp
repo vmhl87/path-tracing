@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "util.cpp"
 
 struct sphere{
@@ -9,5 +11,6 @@ struct sphere{
 	material mat;
 };
 
+std::vector<sphere> spheres;
+
 camera camera;
-img image;

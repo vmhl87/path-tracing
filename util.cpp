@@ -69,10 +69,6 @@ struct ray{
 	color c;
 };
 
-struct dir{
-	vec f, u;
-};
-
 struct img{
 	color *dat;
 	int w, h;
@@ -92,9 +88,13 @@ struct img{
 		unsigned char *d = new unsigned char[w*h*3];
 
 		// different energy function
-		auto c = [] (double v) {
+		auto bake = [] (double v){
+			return v * 255.0;
+		};
+
+		auto c = [&bake] (double v) {
 			return (unsigned char) std::max(0, std::min(255,
-						(int) std::floor(v*255.0)));
+						(int) std::floor(bake(v))));
 		};
 
 		for(int i=0; i<w*h; ++i){
@@ -108,10 +108,24 @@ struct img{
 	}
 };
 
+struct dir{
+	vec f, u;
+};
+
 struct camera{
 	vec p;
 	dir d;
 	int w, h;
 	double c;
 	img image;
+
+	void init(){
+		image.init(w, h);
+	}
+
+	// save_raw_image: in order to post-process brightness, etc
+
+	void write(const char *fname){
+		image.write(fname);
+	}
 };
