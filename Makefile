@@ -1,8 +1,12 @@
-all: run .proc convert
+all: run .proc image.png
 
 debug:
 	g++ render.cpp -o ./run -g -lm -Wall
 	gdb run
+
+test:
+	g++ render.cpp -o run -lm
+	./run < scene.conf
 
 run: *.cpp
 	g++ render.cpp -o ./run -lm -march=native -Wall
@@ -12,5 +16,8 @@ run: *.cpp
 	cat format.sh | rg -v "^\s*$$"
 	bash format.sh
 
-convert: image.bmp
+image.png: image.bmp
 	convert image.bmp image.png
+
+loop: run
+	bash loop.sh

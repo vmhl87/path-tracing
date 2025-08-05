@@ -1,3 +1,4 @@
+#include <random>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -25,7 +26,7 @@ int count_tabs(std::string s){
 
 struct node{
 	std::string s;
-	std::vector<node> child;
+	std::vector<node*> child;
 	bool root;
 
 	node(std::string S, int r){
@@ -33,10 +34,9 @@ struct node{
 		s = S;
 	}
 
-#define read(type) type read_##type(int leading){ \
+#define read(type) type read_##type(){ \
 	std::istringstream v(s); \
-	std::string S; \
-	for(int i=0; i<leading; ++i) v >> S; \
+	std::string S; v >> S; \
 	type res;
 
 #define end ; return res; }
@@ -54,7 +54,8 @@ struct node{
 
 #define handle(type) type handle_##type(node &n){ \
 	type res; \
-	for(node &c : n.child){ \
+	for(node *C : n.child){ \
+		node &c = *C; \
 		std::istringstream V(c.s); \
 		std::string S; V >> S; \
 		if(0){
@@ -63,40 +64,29 @@ struct node{
 
 #define case(x) }else if(S == #x){ res. x =
 
-dir handle_dir(node &n){
-	dir res;
-	for(node &c : n.child){
-		std::istringstream V(c.s);
-		std::string S; V >> S;
-		std::cout << S << '\n';
-		if(0){
-			case(f) c.read_vec(1);
-			case(u) c.read_vec(1);
-			end;
-
-/*
 handle(dir)
-	case(f) c.read_vec(1); std::cout << res.f.out() << '\n';
-	case(u) c.read_vec(1);
+	case(f) c.read_vec().norm();
+	case(u) c.read_vec().norm();
 end;
-*/
 
 handle(cam)
-	case(p) c.read_vec(1);
-	case(d) handle_dir(c); std::cout << "hello\n";
-	case(w) c.read_int(1);
-	case(h) c.read_int(1);
-	case(c) c.read_double(1);
+	case(p) c.read_vec();
+	case(d) handle_dir(c);
+	case(w) c.read_int();
+	case(h) c.read_int();
+	case(c) c.read_double();
+	case(iter) c.read_int();
+	case(noise) c.read_double();
 end;
 
 handle(material)
-	case(c) c.read_vec(1);
-	case(shine) c.read_double(1);
+	case(c) c.read_vec();
+	case(shine) c.read_double();
 end;
 
 handle(sphere)
-	case(p) c.read_vec(1);
-	case(r) c.read_double(1);
+	case(p) c.read_vec();
+	case(r) c.read_double();
 	case(mat) handle_material(c);
 end;
 
@@ -104,7 +94,7 @@ end;
 #undef case
 #undef end
 
-#define case(x) }else if(c.s == #x){ std::cout << "processing " << c.s << '\n';
+#define case(x) }else if(c.s == #x){
 
 void handle(node &c){
 	if(c.s == ""){
@@ -119,7 +109,7 @@ int main(){
 	std::string s;
 	int level = 0;
 
-	std::vector<node> nodes;
+	std::vector<node*> nodes;
 	std::vector<int> ctx;
 
 	while(true){
@@ -130,39 +120,45 @@ int main(){
 		int lvl = count_tabs(s);
 
 		if(lvl > level) ctx.push_back(nodes.size()-1);
-		while(lvl < ctx.size()) ctx.pop_back();
+		while(lvl < (int) ctx.size()) ctx.pop_back();
 		level = lvl;
 
-		node x(s, ctx.size());
-		if(ctx.size()) nodes[ctx.back()].child.push_back(x);
+		node *x = new node(s, ctx.size());
+		if(ctx.size()) nodes[ctx.back()]->child.push_back(x);
 		nodes.push_back(x);
 	}
 
-	for(node &n : nodes) if(n.root) handle(n);
-
-	std::cout << camera.d.out() << '\n';
+	for(node *n : nodes) if(n->root) handle(*n);
 
 	// backward tracing
 	
 	camera.init();
+
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::normal_distribution<double> d(0.0, 1.0);
 	
-	for(int i=0; i<camera.w; ++i)
-		for(int j=0; j<camera.h; ++j){
-			ray r;
+	for(int x=0; x<camera.iter; ++x){
+		for(int i=0; i<camera.w; ++i)
+			for(int j=0; j<camera.h; ++j){
+				ray r;
 
-			r.p = camera.p;
-			r.d = camera.d.project({
-				(i-camera.w/2) / camera.c,
-				(j-camera.h/2) / camera.c,
-				1,
-			}).norm();
+				r.p = camera.p;
+				r.d = camera.d.project({
+					(i-camera.w/2 + d(gen)*camera.noise) / camera.c,
+					(camera.h/2-j + d(gen)*camera.noise) / camera.c,
+					1,
+				}).norm();
 
-			r.c = {1, 1, 1};
+				r.c = {1, 1, 1};
 
-			trace(r, 1);
+				trace(r, 5);
 
-			camera.add(i, j, r.c);
-		}
+				camera.add(i, j, r.c);
+			}
+
+		if(x%5 == 4) camera.write("image.bmp");
+	}
 
 	camera.write("image.bmp");
 }

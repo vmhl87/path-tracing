@@ -1,3 +1,3 @@
 ![rendered image](image.png)
 
-Rendered in  on Intel i5-8250U (8) @ 3.000GHz
+Rendered in 0m26.262s on AMD Ryzen 5 2600 (12) @ 3.400GHz

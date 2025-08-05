@@ -24,6 +24,10 @@ struct vec{
 
 #undef op
 
+	const vec operator*(const double d) const{
+		return {x*d, y*d, z*d};
+	}
+
 	double mag() const{
 		return std::sqrt(x*x + y*y + z*z);
 	}
@@ -68,6 +72,10 @@ struct vec{
 	}
 };
 
+vec lerp(vec a, vec b, double c){
+	return a.lerp(b, c);
+}
+
 using color = vec;
 
 struct material{
@@ -107,36 +115,18 @@ struct img{
 	color& at(int x, int y){
 		return dat[x+y*w];
 	}
-
-	void write(const char *fname){
-		unsigned char *d = new unsigned char[w*h*3];
-
-		// different energy function
-		auto bake = [] (double v){
-			return v * 255.0;
-		};
-
-		auto c = [&bake] (double v) {
-			return (unsigned char) std::max(0, std::min(255,
-						(int) std::floor(bake(v))));
-		};
-
-		for(int i=0; i<w*h; ++i){
-			d[i*3+2] = c(dat[i].x);
-			d[i*3+1] = c(dat[i].y);
-			d[i*3] = c(dat[i].z);
-		}
-
-		writeBMP(fname, d, w, h);
-		delete[] d;
-	}
 };
 
 struct dir{
 	vec f, u;
 
-	vec project(const vec v){
-		vec s = f.cross(u);
+	void snap(){
+		vec s = u.cross(f);
+		u = f.cross(s);
+	}
+
+	vec project(const vec &v){
+		vec s = u.cross(f);
 		return {
 			f.x*v.z + u.x*v.y + s.x*v.x,
 			f.y*v.z + u.y*v.y + s.y*v.x,
@@ -155,21 +145,41 @@ struct dir{
 struct cam{
 	vec p;
 	dir d;
-	int w, h;
-	double c;
+	int w, h, iter = 1;
+	double c, noise;
 	img image;
 
 	void init(){
+		d.snap();
 		image.init(w, h);
 	}
 
 	// save_raw_image: in order to post-process brightness, etc
 	
-	void add(int x, int y, color col){
+	void add(int x, int y, color &col){
 		image.at(x, y) += col;
 	}
 
 	void write(const char *fname){
-		image.write(fname);
+		unsigned char *d = new unsigned char[w*h*3];
+
+		// different energy function
+		auto bake = [&] (double v){
+			return v * 255.0 / iter;
+		};
+
+		auto c = [&] (double v) {
+			return (unsigned char) std::max(0, std::min(255,
+						(int) std::floor(bake(v))));
+		};
+
+		for(int i=0; i<w*h; ++i){
+			d[i*3+2] = c(image.dat[i].x);
+			d[i*3+1] = c(image.dat[i].y);
+			d[i*3] = c(image.dat[i].z);
+		}
+
+		writeBMP(fname, d, w, h);
+		delete[] d;
 	}
 };
