@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <cmath>
 
 #include "bmp.cpp"
@@ -7,36 +8,36 @@
 struct vec{
 	double x, y, z;
 
-	vec operator+(const vec o){
-		return {x+o.x, y+o.y, z+o.z};
-	}
+#define op(oper) const vec operator oper(const vec &o) const{ \
+	return {x oper o.x, y oper o.y, z oper o.z}; \
+}
 
-	vec operator-(const vec o){
-		return {x-o.x, y-o.y, z-o.z};
-	}
+	op(+) op(-) op(*) op(/)
 
-	vec operator*(double v){
-		return {x*v, y*v, z*v};
-	}
+#undef op
 
-	vec operator/(double v){
-		return {x/v, y/v, z/v};
-	}
+#define op(oper) void operator oper##=(const vec &o){ \
+	x oper##= o.x, y oper##= o.y, z oper##= o.z; \
+}
 
-	double mag(){
+	op(+) op(-) op(*) op(/)
+
+#undef op
+
+	double mag() const{
 		return std::sqrt(x*x + y*y + z*z);
 	}
 
-	vec norm(){
+	vec norm() const{
 		double m = mag();
 		return {x/m, y/m, z/m};
 	}
 
-	double dot(const vec o){
+	double dot(const vec o) const{
 		return x*o.x + y*o.y + z*o.z;
 	}
 
-	vec cross(const vec o){
+	vec cross(const vec o) const{
 		return {
 			y*o.z - z*o.y,
 			z*o.x - x*o.z,
@@ -55,6 +56,16 @@ struct vec{
 	double dist(const vec o){
 		return (*this-o).mag();
 	}
+
+	std::string out(){
+		auto v = [] (double x) {
+			return std::round(x * 1000.0) / 1000.0;
+		};
+
+		std::stringstream c;
+		c << '{' << v(x) << ' ' << v(y) << ' ' << v(z) << '}';
+		return c.str();
+	}
 };
 
 using color = vec;
@@ -62,15 +73,28 @@ using color = vec;
 struct material{
 	double shine;
 	color c;
+
+	std::string out(){
+		std::stringstream s;
+		s << "{c: " << c.out() << ", shine: " << shine << '}';
+		return s.str();
+	}
 };
 
 struct ray{
 	vec p, d;
 	color c;
+
+	std::string out(){
+		std::stringstream s;
+		s << "{p: " << p.out() << ", d: " << d.out()
+			<< ", c: " << c.out() << '}';
+		return s.str();
+	}
 };
 
 struct img{
-	color *dat;
+	color *dat = nullptr;
 	int w, h;
 
 	void init(int W, int H){
@@ -78,7 +102,7 @@ struct img{
 		dat = new color[w*h];
 	}
 
-	~img() { delete[] dat; }
+	~img() { if(dat != nullptr) delete[] dat; }
 
 	color& at(int x, int y){
 		return dat[x+y*w];
@@ -110,6 +134,22 @@ struct img{
 
 struct dir{
 	vec f, u;
+
+	vec project(const vec v){
+		vec s = f.cross(u);
+		return {
+			f.x*v.z + u.x*v.y + s.x*v.x,
+			f.y*v.z + u.y*v.y + s.y*v.x,
+			f.z*v.z + u.z*v.y + s.z*v.x,
+		};
+	}
+
+	std::string out(){
+		std::stringstream s;
+		s << "{f: " << f.out() << ", u: " << u.out()
+			<< ", s: " << f.cross(u).out() << '}';
+		return s.str();
+	}
 };
 
 struct cam{
@@ -124,6 +164,10 @@ struct cam{
 	}
 
 	// save_raw_image: in order to post-process brightness, etc
+	
+	void add(int x, int y, color col){
+		image.at(x, y) += col;
+	}
 
 	void write(const char *fname){
 		image.write(fname);

@@ -1,5 +1,9 @@
 all: run .proc convert
 
+debug:
+	g++ render.cpp -o ./run -g -lm -Wall
+	gdb run
+
 run: *.cpp
 	g++ render.cpp -o ./run -lm -march=native -Wall
 

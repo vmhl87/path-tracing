@@ -27,7 +27,6 @@ struct node{
 	std::string s;
 	std::vector<node> child;
 	bool root;
-	void *dat;
 
 	node(std::string S, int r){
 		root = r == 0;
@@ -55,20 +54,36 @@ struct node{
 
 #define handle(type) type handle_##type(node &n){ \
 	type res; \
-	for(node &c : n.child) if(c.s == ""){
+	for(node &c : n.child){ \
+		std::istringstream V(c.s); \
+		std::string S; V >> S; \
+		if(0){
 
-#define end } return res; }
+#define end }} return res; }
 
-#define case(x) }else if(c.s == "##x##"){ res. x =
+#define case(x) }else if(S == #x){ res. x =
 
+dir handle_dir(node &n){
+	dir res;
+	for(node &c : n.child){
+		std::istringstream V(c.s);
+		std::string S; V >> S;
+		std::cout << S << '\n';
+		if(0){
+			case(f) c.read_vec(1);
+			case(u) c.read_vec(1);
+			end;
+
+/*
 handle(dir)
-	case(f) c.read_vec(1);
-	case(f) c.read_vec(1);
+	case(f) c.read_vec(1); std::cout << res.f.out() << '\n';
+	case(u) c.read_vec(1);
 end;
+*/
 
 handle(cam)
 	case(p) c.read_vec(1);
-	case(d) handle_dir(c);
+	case(d) handle_dir(c); std::cout << "hello\n";
 	case(w) c.read_int(1);
 	case(h) c.read_int(1);
 	case(c) c.read_double(1);
@@ -89,7 +104,7 @@ end;
 #undef case
 #undef end
 
-#define case(x) }else if(c.s == "##x##"){
+#define case(x) }else if(c.s == #x){ std::cout << "processing " << c.s << '\n';
 
 void handle(node &c){
 	if(c.s == ""){
@@ -115,7 +130,7 @@ int main(){
 		int lvl = count_tabs(s);
 
 		if(lvl > level) ctx.push_back(nodes.size()-1);
-		else if(lvl < level) ctx.pop_back();
+		while(lvl < ctx.size()) ctx.pop_back();
 		level = lvl;
 
 		node x(s, ctx.size());
@@ -124,4 +139,30 @@ int main(){
 	}
 
 	for(node &n : nodes) if(n.root) handle(n);
+
+	std::cout << camera.d.out() << '\n';
+
+	// backward tracing
+	
+	camera.init();
+	
+	for(int i=0; i<camera.w; ++i)
+		for(int j=0; j<camera.h; ++j){
+			ray r;
+
+			r.p = camera.p;
+			r.d = camera.d.project({
+				(i-camera.w/2) / camera.c,
+				(j-camera.h/2) / camera.c,
+				1,
+			}).norm();
+
+			r.c = {1, 1, 1};
+
+			trace(r, 1);
+
+			camera.add(i, j, r.c);
+		}
+
+	camera.write("image.bmp");
 }
