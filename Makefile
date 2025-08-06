@@ -7,7 +7,7 @@ debug:
 	gdb run
 
 run: *.cpp
-	g++ render.cpp -o ./run -lm -march=native -Wall
+	g++ render.cpp -o ./run -lm -O2 -march=native -Wall
 
 test: run
 	./run < scene.conf

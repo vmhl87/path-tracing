@@ -87,25 +87,38 @@ vec lerp(vec a, vec b, double c){
 
 namespace rng{
 	std::random_device rd;
-	std::mt19937 gen(rd());
+	std::mt19937_64 gen(rd());
 	std::uniform_real_distribution<double> uniform_gen(0.0, 1.0);
 	std::normal_distribution<double> gaussian_gen(0.0, 1.0);
 
-	vec uniform(){
-		while(true){
-			vec v = {
-				rng::uniform_gen(rng::gen)*2.0 - 1.0,
-				rng::uniform_gen(rng::gen)*2.0 - 1.0,
-				rng::uniform_gen(rng::gen)*2.0 - 1.0,
-			};
+	vec uniform() {
+		double u = rng::uniform_gen(rng::gen) * 2.0 - 1.0;
+		double phi = rng::uniform_gen(rng::gen) * 2.0 * M_PI;
 
-			if(v.mag() <= 1.0 && v.mag() > 1e-10) return v;
-		}
+		double sqrt_1_minus_u2 = sqrt(1.0 - u * u);
+		
+		vec v = {
+			sqrt_1_minus_u2 * cos(phi),
+			sqrt_1_minus_u2 * sin(phi),
+			u
+		};
+
+		double r_cubed = rng::uniform_gen(rng::gen);
+		double r = pow(r_cubed, 1.0/3.0);
+		
+		return v * r;
 	}
 
 	vec uniform_norm(){
-		vec v = uniform();
-		return v.norm();
+		double u = rng::uniform_gen(rng::gen) * 2.0 - 1.0;
+		double phi = rng::uniform_gen(rng::gen) * 2.0 * M_PI;
+		double sqrt_1_minus_u2 = sqrt(1.0 - u * u);
+
+		return {
+			sqrt_1_minus_u2 * cos(phi),
+			sqrt_1_minus_u2 * sin(phi),
+			u
+		};
 	}
 
 	vec gaussian(){

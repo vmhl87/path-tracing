@@ -166,31 +166,31 @@ int main(){
 
 		/*
 		// skylight
-		r.p = rng::uniform_norm().norm()*0.15 + (vec){0, 5, 0};
+		r.p = rng::uniform()*0.15 + (vec){0, 5, 0};
 		r.d = (rng::uniform_norm() + (vec){0, -1, 0}).norm();
 		*/
 
-		/*
 		// laser
 		r.p = rng::gaussian()*0.02 + (vec){0, 0.5, 0};
 		r.d = ((vec){-2, 0, 0} - (vec){0, 0.5, 0}).norm();
-		*/
 
 		/*
 		// spotlight from camera
-		r.p = camera.p;
+		r.p = camera.p + rng::uniform()*0.15;
 		r.d = camera.d.project(rng::uniform_norm() + (vec){0, 0, 1}).norm();
 		*/
 
+		/*
 		// combination
 		if(rng::uniform_norm().x > 0 && rng::uniform_norm().x > 0){
 			r.p = camera.p + (vec){0, 2, 0} + rng::gaussian() * 0.015;
 			vec center = camera.p + camera.d.f * 3.0;
 			r.d = (center-r.p).norm();
 		}else{
-			r.p = rng::uniform_norm().norm()*0.15 + (vec){2.1, 5, 3.2};
+			r.p = rng::uniform_norm()*0.15 + (vec){2.1, 5, 3.2};
 			r.d = (rng::uniform_norm() + (vec){0, -1, 0}).norm();
 		}
+		*/
 
 		trace(r, camera.bounces);
 

@@ -17,14 +17,12 @@ struct sphere{
 
 	material mat;
 
-	touch hit(const ray &o) const{
+	void hit(const ray &o, touch &res) const{
 		vec oc = o.p-p;
 
 		double b = 2.0*oc.dot(o.d),
 			   c = oc.dot(oc)-r*r,
 			   D = b*b - 4*c;
-
-		touch res;
 
 		if(D<0) res.hit = false;
 		else{
@@ -39,8 +37,6 @@ struct sphere{
 				res.norm = ((res.p = o.p+o.d*res.d)-p).norm(),
 				res.mat = mat;
 		}
-
-		return res;
 	}
 };
 
@@ -49,11 +45,11 @@ std::vector<sphere> spheres;
 cam camera;
 
 touch hit(ray &r){
-	touch best; best.d = 1e18, best.hit = 0;
+	touch best, alt; best.d = 1e18, best.hit = 0;
 
 	for(const sphere &s : spheres){
-		touch h = s.hit(r);
-		if(h.hit && h.d < best.d) best = h;
+		s.hit(r, alt);
+		if(alt.hit && alt.d < best.d) best = alt;
 	}
 
 	return best;
