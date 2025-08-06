@@ -129,17 +129,6 @@ namespace rng{
 
 using color = vec;
 
-struct material{
-	double shine;
-	color c;
-
-	std::string out(){
-		std::stringstream s;
-		s << "{c: " << c.out() << ", shine: " << shine << '}';
-		return s.str();
-	}
-};
-
 struct ray{
 	vec p, d;
 	color c;
@@ -148,6 +137,43 @@ struct ray{
 		std::stringstream s;
 		s << "{p: " << p.out() << ", d: " << d.out()
 			<< ", c: " << c.out() << '}';
+		return s.str();
+	}
+};
+
+struct noisy_vec{
+	double r = 0;
+	vec p;
+	int t = -1; // 0: uniform, 1: uniform_norm, 2: gaussian
+	
+	vec operator()() const{
+		if(t == 0) return p + rng::uniform()*r;
+		if(t == 1) return p + rng::uniform_norm()*r;
+		if(t == 2) return p + rng::gaussian()*r;
+		return p;
+	}
+};
+
+struct light{
+	noisy_vec p, d;
+	color c = {1, 1, 1};
+	int granular = 1;
+
+	void operator()(ray &r) const{
+		r.p = p(), r.d = d().norm();
+		r.c = c * (double) granular;
+	}
+};
+
+std::vector<light> lights;
+
+struct material{
+	double shine;
+	color c;
+
+	std::string out(){
+		std::stringstream s;
+		s << "{c: " << c.out() << ", shine: " << shine << '}';
 		return s.str();
 	}
 };

@@ -94,6 +94,19 @@ handle(cam)
 	case(bounces) c.read_int();
 end;
 
+handle(noisy_vec)
+	case(p) c.read_vec();
+	case(r) c.read_double();
+	case(t) c.read_int();
+end;
+
+handle(light)
+	case(p) handle_noisy_vec(c);
+	case(d) handle_noisy_vec(c);
+	case(c) c.read_vec();
+	case(granular) c.read_int();
+end;
+
 handle(material)
 	case(c) c.read_vec();
 	case(shine) c.read_double();
@@ -115,6 +128,7 @@ void handle(node &c){
 	if(c.s == ""){
 		case(camera) camera = handle_cam(c);
 		case(sphere) spheres.push_back(handle_sphere(c));
+		case(light) lights.push_back(handle_light(c));
 	}
 }
 
@@ -161,8 +175,19 @@ int main(){
 	std::mt19937 gen(rd());
 	std::normal_distribution<double> d(0.0, 1.0);
 	
-	for(int64_t x=0; x<camera.iter; ++x){
-		ray r; r.c = {1, 1, 1};
+	for(int64_t x=0; x<camera.iter; ++x)
+		for(const light &l : lights){
+			if(l.granular > 1 && x%l.granular) continue;
+
+			ray r; l(r);
+
+			trace(r, camera.bounces);
+
+			if(camera.report && x%camera.report == 0)
+				camera.write("image.bmp", "image.raw", (double) x / camera.iter);
+		}
+
+		//ray r; r.c = {1, 1, 1};
 
 		/*
 		// skylight
@@ -176,12 +201,14 @@ int main(){
 		r.d = ((vec){-2, 0, 0} - (vec){0, 0.5, 0}).norm();
 		*/
 
+		/*
 		vec X = {0, 0.5, 0};
 		X -= {-2, 0, 0};
 		X = X.norm();
 
 		r.p = X*1.1 + (vec){-2, 0, 0} + rng::gaussian() * 0.015;
 		r.d = (rng::uniform_norm() + X*.99).norm();
+		*/
 
 		/*
 		// spotlight from camera
@@ -200,12 +227,6 @@ int main(){
 			r.d = (rng::uniform_norm() + (vec){0, -1, 0}).norm();
 		}
 		*/
-
-		trace(r, camera.bounces);
-
-		if(camera.report && x%camera.report == 0)
-			camera.write("image.bmp", "image.raw", (double) x / camera.iter);
-	}
 
 	camera.write("image.bmp", "image.raw", 1.0);
 }
