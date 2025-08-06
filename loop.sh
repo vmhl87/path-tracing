@@ -8,5 +8,5 @@ while true; do
 	convert image.bmp image.png
 	echo done
 
-	inotifywait -e close_write scene.conf &>/dev/null
+	inotifywait -e close_write scene.conf &> /dev/null
 done

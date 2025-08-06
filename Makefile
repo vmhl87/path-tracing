@@ -1,15 +1,16 @@
-all: run .proc image.png
+all: test
+
+final: run .proc image.png
 
 debug:
 	g++ render.cpp -o ./run -g -lm -Wall
 	gdb run
 
-test:
-	g++ render.cpp -o run -lm
-	./run < scene.conf
-
 run: *.cpp
 	g++ render.cpp -o ./run -lm -march=native -Wall
+
+test: run
+	./run < scene.conf
 
 .proc: scene.conf run
 	touch .proc

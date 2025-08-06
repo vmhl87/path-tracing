@@ -9,16 +9,14 @@ struct vec{
 	double x, y, z;
 
 #define op(oper) const vec operator oper(const vec &o) const{ \
-	return {x oper o.x, y oper o.y, z oper o.z}; \
-}
+	return {x oper o.x, y oper o.y, z oper o.z}; }
 
 	op(+) op(-) op(*) op(/)
 
 #undef op
 
 #define op(oper) void operator oper##=(const vec &o){ \
-	x oper##= o.x, y oper##= o.y, z oper##= o.z; \
-}
+	x oper##= o.x, y oper##= o.y, z oper##= o.z; }
 
 	op(+) op(-) op(*) op(/)
 

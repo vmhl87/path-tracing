@@ -58,7 +58,6 @@ void trace(ray &r, int iter){
 
 	if(best.hit){
 		r.c *= best.mat.c;
-
 		color c = r.c;
 
 		r.p = best.p;
