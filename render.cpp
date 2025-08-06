@@ -170,9 +170,18 @@ int main(){
 		r.d = (rng::uniform_norm() + (vec){0, -1, 0}).norm();
 		*/
 
+		/*
 		// laser
 		r.p = rng::gaussian()*0.02 + (vec){0, 0.5, 0};
 		r.d = ((vec){-2, 0, 0} - (vec){0, 0.5, 0}).norm();
+		*/
+
+		vec X = {0, 0.5, 0};
+		X -= {-2, 0, 0};
+		X = X.norm();
+
+		r.p = X*1.1 + (vec){-2, 0, 0} + rng::gaussian() * 0.015;
+		r.d = (rng::uniform_norm() + X*.99).norm();
 
 		/*
 		// spotlight from camera

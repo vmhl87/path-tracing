@@ -70,7 +70,7 @@ struct vec{
 		return (*this-o).mag();
 	}
 
-	std::string out(){
+	std::string out() const{
 		auto v = [] (double x) {
 			return std::round(x * 1000.0) / 1000.0;
 		};
