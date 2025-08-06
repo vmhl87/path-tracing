@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <sstream>
 #include <cmath>
 
@@ -8,7 +9,7 @@
 struct vec{
 	double x, y, z;
 
-#define op(oper) const vec operator oper(const vec &o) const{ \
+#define op(oper) inline const vec operator oper(const vec &o) const{ \
 	return {x oper o.x, y oper o.y, z oper o.z}; }
 
 	op(+) op(-) op(*) op(/)
@@ -22,9 +23,19 @@ struct vec{
 
 #undef op
 
-	const vec operator*(const double d) const{
-		return {x*d, y*d, z*d};
-	}
+#define op(oper) inline const vec operator oper(const double d) const{ \
+	return {x oper d, y oper d, z oper d}; }
+
+	op(+) op(-) op(*) op(/)
+
+#undef op
+
+#define op(oper) void operator oper##=(const double d){ \
+	x oper##= d, y oper##= d, z oper##= d; }
+
+	op(+) op(-) op(*) op(/)
+
+#undef op
 
 	double mag() const{
 		return std::sqrt(x*x + y*y + z*z);
@@ -74,6 +85,26 @@ vec lerp(vec a, vec b, double c){
 	return a.lerp(b, c);
 }
 
+namespace rng{
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<double> uniform(0.0, 1.0);
+	std::normal_distribution<double> normal(0.0, 1.0);
+}
+
+vec random_vec(){
+	while(true){
+		vec v = {
+			rng::uniform(rng::gen)*2.0 - 1.0,
+			rng::uniform(rng::gen)*2.0 - 1.0,
+			rng::uniform(rng::gen)*2.0 - 1.0,
+		};
+
+		if(v.mag() <= 1.0 && v.mag() > 1e-10)
+			return v.norm();
+	}
+}
+
 using color = vec;
 
 struct material{
@@ -99,36 +130,27 @@ struct ray{
 	}
 };
 
-struct img{
-	color *dat = nullptr;
-	int w, h;
-
-	void init(int W, int H){
-		w = W, h = H;
-		dat = new color[w*h];
-	}
-
-	~img() { if(dat != nullptr) delete[] dat; }
-
-	color& at(int x, int y){
-		return dat[x+y*w];
-	}
-};
-
 struct dir{
-	vec f, u;
+	vec f, u, s;
 
-	void snap(){
-		vec s = u.cross(f);
+	void init(){
+		s = u.cross(f);
 		u = f.cross(s);
 	}
 
 	vec project(const vec &v){
-		vec s = u.cross(f);
 		return {
 			f.x*v.z + u.x*v.y + s.x*v.x,
 			f.y*v.z + u.y*v.y + s.y*v.x,
 			f.z*v.z + u.z*v.y + s.z*v.x,
+		};
+	}
+
+	vec map(const vec &v){
+		return {
+			v.dot(s),
+			v.dot(u),
+			v.dot(f),
 		};
 	}
 
@@ -143,27 +165,53 @@ struct dir{
 struct cam{
 	vec p;
 	dir d;
-	int w, h, iter = 1;
-	double c, noise;
-	img image;
+	int w, h;
+	double c;
+	color *dat = nullptr;
+	
+	// settings
+	int64_t iter = 0,
+			report = 0;
+	double exposure = 1.0,
+		   gamma = 0.0;
 
 	void init(){
-		d.snap();
-		image.init(w, h);
+		d.init();
+		dat = new color[w*h];
+	}
+
+	~cam() { if(dat != nullptr) delete[] dat; }
+
+	color& at(int x, int y){
+		return dat[x+y*w];
+	}
+
+	void add(int x, int y, color &col){
+		at(x, y) += col;
+	}
+
+	void add(vec &ray, color &col){
+		vec coord = d.map(ray-p);
+		if(coord.z == 0) return;
+		coord /= coord.z;
+		coord *= c;
+		int x = w/2 + std::floor(coord.x),
+			y = h/2 - std::floor(coord.y);
+
+		if(x >= 0 && x < w && y >= 0 && y < h)
+			at(x, y) += col;
 	}
 
 	// save_raw_image: in order to post-process brightness, etc
 	
-	void add(int x, int y, color &col){
-		image.at(x, y) += col;
-	}
-
-	void write(const char *fname){
+	void write(const char *iname, const char *rname, double progress){
 		unsigned char *d = new unsigned char[w*h*3];
 
 		// different energy function
 		auto bake = [&] (double v){
-			return v * 255.0 / iter;
+			double energy = v/exposure/progress;
+			if(gamma > 1.0) energy = pow(energy, 1.0/gamma);
+			return 255.0 * energy;
 		};
 
 		auto c = [&] (double v) {
@@ -172,12 +220,12 @@ struct cam{
 		};
 
 		for(int i=0; i<w*h; ++i){
-			d[i*3+2] = c(image.dat[i].x);
-			d[i*3+1] = c(image.dat[i].y);
-			d[i*3] = c(image.dat[i].z);
+			d[i*3+2] = c(dat[i].x);
+			d[i*3+1] = c(dat[i].y);
+			d[i*3] = c(dat[i].z);
 		}
 
-		writeBMP(fname, d, w, h);
+		writeBMP(iname, d, w, h);
 		delete[] d;
 	}
 };

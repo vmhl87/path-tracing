@@ -48,7 +48,7 @@ std::vector<sphere> spheres;
 
 cam camera;
 
-void trace(ray &r, int iter){
+touch hit(ray &r){
 	touch best; best.d = 1e18, best.hit = 0;
 
 	for(const sphere &s : spheres){
@@ -56,15 +56,35 @@ void trace(ray &r, int iter){
 		if(h.hit && h.d < best.d) best = h;
 	}
 
-	if(best.hit){
-		r.c *= best.mat.c;
-		color c = r.c;
+	return best;
+}
 
-		r.p = best.p;
-		r.d = r.d - best.norm * 2.0 * r.d.dot(best.norm);
+void add(ray &r){
+	touch t = hit(r);
+	if(t.hit && t.d <= r.p.dist(camera.p)) return;
+	camera.add(r.p, r.c);
+}
+
+void trace(ray &r, int iter){
+	touch t = hit(r);
+
+	if(t.hit){
+		r.c *= t.mat.c;
+
+		ray R;
+		
+		R.p = t.p;
+		R.d = (camera.p-t.p).norm();
+		R.c = r.c * R.d.dot(t.norm);
+
+		add(R);
+
+		r.p = t.p;
+		r.d = r.d - t.norm * 2.0 * r.d.dot(t.norm);
+
+		// shine should change this distribution
+		r.d = (r.d+random_vec()).norm();
 
 		if(iter > 0) trace(r, iter-1);
-
-		r.c = lerp(c, r.c, best.mat.shine);
 	}
 }

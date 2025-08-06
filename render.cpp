@@ -47,6 +47,8 @@ struct node{
 
 	read(double) v >> res end
 
+	read(int64_t) v >> res end
+
 	read(vec) v >> res.x >> res.y >> res.z end
 
 #undef read
@@ -77,8 +79,10 @@ handle(cam)
 	case(w) c.read_int();
 	case(h) c.read_int();
 	case(c) c.read_double();
-	case(iter) c.read_int();
-	case(noise) c.read_double();
+	case(iter) c.read_int64_t();
+	case(report) c.read_int64_t();
+	case(exposure) c.read_double();
+	case(gamma) c.read_double();
 end;
 
 handle(material)
@@ -140,27 +144,18 @@ int main(){
 	std::mt19937 gen(rd());
 	std::normal_distribution<double> d(0.0, 1.0);
 	
-	for(int x=0; x<camera.iter; ++x){
-		for(int i=0; i<camera.w; ++i)
-			for(int j=0; j<camera.h; ++j){
-				ray r;
+	for(int64_t x=0; x<camera.iter; ++x){
+		ray r;
 
-				r.p = camera.p;
-				r.d = camera.d.project({
-					(i-camera.w/2 + d(gen)*camera.noise) / camera.c,
-					(camera.h/2-j + d(gen)*camera.noise) / camera.c,
-					1,
-				}).norm();
+		r.p = random_vec().norm()*0.15 + (vec){0, 5, 0};
+		r.d = (random_vec() + (vec){0, -1, 0}).norm();
+		r.c = {1, 1, 1};
 
-				r.c = {1, 1, 1};
+		trace(r, 5);
 
-				trace(r, 5);
-
-				camera.add(i, j, r.c);
-			}
-
-		if(x%5 == 4) camera.write("image.bmp");
+		if(camera.report && x%camera.report == 0)
+			camera.write("image.bmp", "image.raw", (double) x / camera.iter);
 	}
 
-	camera.write("image.bmp");
+	camera.write("image.bmp", "image.raw", 1.0);
 }
