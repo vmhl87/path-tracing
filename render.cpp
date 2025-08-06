@@ -6,14 +6,22 @@
 
 #include "trace.cpp"
 
-bool ignore(std::string s){
+bool whitespace(std::string s){
+	for(char c : s)
+		if(c != ' ' && c != '\t')
+			return false;
+
+	return true;
+}
+
+bool comment(std::string s){
 	for(char c : s)
 		if(c != ' ' && c != '\t')
 			return false;
 		else if(c == '#')
 			return true;
 
-	return true;
+	return false;
 }
 
 int count_tabs(std::string s){
@@ -57,7 +65,7 @@ struct node{
 };
 
 #define handle(type) type handle_##type(node &n){ \
-	type res; \
+	type res = {}; \
 	for(node *C : n.child){ \
 		node &c = *C; \
 		std::istringstream V(c.s); \
@@ -113,7 +121,7 @@ void handle(node &c){
 
 int main(){
 	std::string s;
-	int level = 0;
+	int level = 0, comment_level = -2;
 
 	std::vector<node*> nodes;
 	std::vector<int> ctx;
@@ -122,8 +130,16 @@ int main(){
 		std::getline(std::cin, s);
 		if(s == "done") break;
 
-		if(ignore(s)) continue;
+		if(whitespace(s)) continue;
+
 		int lvl = count_tabs(s);
+
+		if(lvl == 1+comment_level) continue;
+
+		if(comment(s)){
+			comment_level = lvl;
+			continue;
+		}else comment_level = -2;
 
 		if(lvl > level) ctx.push_back(nodes.size()-1);
 		while(lvl < (int) ctx.size()) ctx.pop_back();
@@ -147,8 +163,15 @@ int main(){
 	for(int64_t x=0; x<camera.iter; ++x){
 		ray r;
 
+		/*
 		r.p = random_vec().norm()*0.15 + (vec){0, 5, 0};
 		r.d = (random_vec() + (vec){0, -1, 0}).norm();
+		r.c = {1, 1, 1};
+		*/
+
+		// laser
+		r.p = random_vec().norm()*0.05 + (vec){0, 0.5, 0};
+		r.d = ((vec){-2, 0, 0} - (vec){0, 0.5, 0}).norm();
 		r.c = {1, 1, 1};
 
 		trace(r, 5);

@@ -170,7 +170,7 @@ struct cam{
 	color *dat = nullptr;
 	
 	// settings
-	int64_t iter = 0,
+	int64_t iter = 10000,
 			report = 0;
 	double exposure = 1.0,
 		   gamma = 0.0;
@@ -207,9 +207,11 @@ struct cam{
 	void write(const char *iname, const char *rname, double progress){
 		unsigned char *d = new unsigned char[w*h*3];
 
+		double exp2 = iter * progress / w / h / exposure;
+
 		// different energy function
 		auto bake = [&] (double v){
-			double energy = v/exposure/progress;
+			double energy = v/exp2;
 			if(gamma > 1.0) energy = pow(energy, 1.0/gamma);
 			return 255.0 * energy;
 		};
