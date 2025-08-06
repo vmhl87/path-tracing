@@ -164,9 +164,11 @@ int main(){
 	for(int64_t x=0; x<camera.iter; ++x){
 		ray r; r.c = {1, 1, 1};
 
+		/*
 		// skylight
 		r.p = random_vec().norm()*0.15 + (vec){0, 5, 0};
 		r.d = (random_vec() + (vec){0, -1, 0}).norm();
+		*/
 
 		/*
 		// laser
@@ -179,6 +181,16 @@ int main(){
 		r.p = camera.p;
 		r.d = camera.d.project(random_vec() + (vec){0, 0, 1}).norm();
 		*/
+
+		// combination
+		if(random_vec().x > 0 && random_vec().x > 0){
+			r.p = camera.p + (vec){0, 2, 0} + random_vec() * 0.05;
+			vec center = camera.p + camera.d.f * 3.0;
+			r.d = (center-r.p).norm();
+		}else{
+			r.p = random_vec().norm()*0.15 + (vec){2.1, 5, 3.2};
+			r.d = (random_vec() + (vec){0, -1, 0}).norm();
+		}
 
 		trace(r, camera.bounces);
 
