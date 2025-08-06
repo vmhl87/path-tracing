@@ -1,3 +1,6 @@
+![rendered image](image.png)
+
+```
 camera
 	p 8 1.5 -10
 	d
@@ -5,24 +8,23 @@ camera
 		u 0 1 0
 	
 	# export res
-	w 1600
-	h 800
-	c 2000
+		w 1600
+		h 800
+		c 2000
 
 	# proto res
-		w 800
-		h 400
-		c 1000
+	w 800
+	h 400
+	c 1000
 
 	# export samples
-	iter	100000000
+	iter	50000000
 
 	# proto samples
 		iter	10000000
 		report	1000000
 
-	exposure .625
-	bounces 5
+	exposure 1
 	gamma 3
 
 # ground
@@ -58,3 +60,4 @@ sphere
 		shine 1
 
 done
+```

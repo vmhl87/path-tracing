@@ -168,19 +168,20 @@ struct cam{
 	int w, h;
 	double c;
 	color *dat = nullptr;
+	unsigned char *image = nullptr;
 	
 	// settings
 	int64_t iter = 10000,
 			report = 0;
+	int bounces = 5;
 	double exposure = 1.0,
 		   gamma = 0.0;
 
 	void init(){
 		d.init();
 		dat = new color[w*h];
+		image = new unsigned char[w*h*3];
 	}
-
-	~cam() { if(dat != nullptr) delete[] dat; }
 
 	color& at(int x, int y){
 		return dat[x+y*w];
@@ -205,11 +206,8 @@ struct cam{
 	// save_raw_image: in order to post-process brightness, etc
 	
 	void write(const char *iname, const char *rname, double progress){
-		unsigned char *d = new unsigned char[w*h*3];
-
 		double exp2 = iter * progress / w / h / exposure;
 
-		// different energy function
 		auto bake = [&] (double v){
 			double energy = v/exp2;
 			if(gamma > 1.0) energy = pow(energy, 1.0/gamma);
@@ -222,12 +220,11 @@ struct cam{
 		};
 
 		for(int i=0; i<w*h; ++i){
-			d[i*3+2] = c(dat[i].x);
-			d[i*3+1] = c(dat[i].y);
-			d[i*3] = c(dat[i].z);
+			image[i*3+2] = c(dat[i].x);
+			image[i*3+1] = c(dat[i].y);
+			image[i*3] = c(dat[i].z);
 		}
 
-		writeBMP(iname, d, w, h);
-		delete[] d;
+		writeBMP(iname, image, w, h);
 	}
 };

@@ -1,3 +1,6 @@
+![rendered image](image.png)
+
+```
 camera
 	p 8 1.5 -10
 	d
@@ -22,7 +25,6 @@ camera
 		report	1000000
 
 	exposure .625
-	bounces 5
 	gamma 3
 
 # ground
@@ -58,3 +60,4 @@ sphere
 		shine 1
 
 done
+```

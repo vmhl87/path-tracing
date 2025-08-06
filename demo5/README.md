@@ -1,3 +1,6 @@
+![rendered image](image.png)
+
+```
 camera
 	p 8 1.5 -10
 	d
@@ -58,3 +61,4 @@ sphere
 		shine 1
 
 done
+```

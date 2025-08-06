@@ -91,6 +91,7 @@ handle(cam)
 	case(report) c.read_int64_t();
 	case(exposure) c.read_double();
 	case(gamma) c.read_double();
+	case(bounces) c.read_int();
 end;
 
 handle(material)
@@ -121,7 +122,7 @@ void handle(node &c){
 
 int main(){
 	std::string s;
-	int level = 0, comment_level = -2;
+	int level = 0, comment_level = 1000;
 
 	std::vector<node*> nodes;
 	std::vector<int> ctx;
@@ -134,12 +135,12 @@ int main(){
 
 		int lvl = count_tabs(s);
 
-		if(lvl == 1+comment_level) continue;
+		if(lvl > comment_level) continue;
 
 		if(comment(s)){
 			comment_level = lvl;
 			continue;
-		}else comment_level = -2;
+		}else comment_level = 1000;
 
 		if(lvl > level) ctx.push_back(nodes.size()-1);
 		while(lvl < (int) ctx.size()) ctx.pop_back();
@@ -161,20 +162,25 @@ int main(){
 	std::normal_distribution<double> d(0.0, 1.0);
 	
 	for(int64_t x=0; x<camera.iter; ++x){
-		ray r;
+		ray r; r.c = {1, 1, 1};
 
-		/*
+		// skylight
 		r.p = random_vec().norm()*0.15 + (vec){0, 5, 0};
 		r.d = (random_vec() + (vec){0, -1, 0}).norm();
-		r.c = {1, 1, 1};
-		*/
 
+		/*
 		// laser
 		r.p = random_vec().norm()*0.05 + (vec){0, 0.5, 0};
 		r.d = ((vec){-2, 0, 0} - (vec){0, 0.5, 0}).norm();
-		r.c = {1, 1, 1};
+		*/
 
-		trace(r, 5);
+		/*
+		// spotlight from camera
+		r.p = camera.p;
+		r.d = camera.d.project(random_vec() + (vec){0, 0, 1}).norm();
+		*/
+
+		trace(r, camera.bounces);
 
 		if(camera.report && x%camera.report == 0)
 			camera.write("image.bmp", "image.raw", (double) x / camera.iter);
