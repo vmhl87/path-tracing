@@ -34,7 +34,7 @@ sphere
 	r 1
 	mat
 		c 1 .5 .5
-		shine .5
+		shine .1
 
 # mirror
 sphere
