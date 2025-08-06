@@ -6,10 +6,12 @@
 
 #include "trace.cpp"
 
-bool only_whitespace(std::string s){
+bool ignore(std::string s){
 	for(char c : s)
 		if(c != ' ' && c != '\t')
 			return false;
+		else if(c == '#')
+			return true;
 
 	return true;
 }
@@ -116,7 +118,7 @@ int main(){
 		std::getline(std::cin, s);
 		if(s == "done") break;
 
-		if(only_whitespace(s)) continue;
+		if(ignore(s)) continue;
 		int lvl = count_tabs(s);
 
 		if(lvl > level) ctx.push_back(nodes.size()-1);
