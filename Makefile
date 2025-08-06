@@ -18,6 +18,15 @@ run: *.cpp
 
 image.png: image.bmp
 	convert image.bmp image.png
+	cp image.png final-render.png
 
 loop: run
 	bash loop.sh
+
+id = -tmp
+demo: test
+	convert image.bmp image.png
+	mkdir -p "demo$(id)"
+	cp scene.conf image.png "demo$(id)"
+	sed -e '/CODE/r scene.conf' -e '/CODE/d' template-demo.md \
+		> "demo$(id)/README.md"
