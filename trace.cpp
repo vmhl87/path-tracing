@@ -83,7 +83,7 @@ void trace(ray &r, int iter){
 		r.d = r.d - t.norm * 2.0 * r.d.dot(t.norm);
 
 		// shine should change this distribution
-		r.d = (r.d+random_vec()).norm();
+		r.d = (r.d+rng::uniform_norm()).norm();
 
 		if(iter > 0) trace(r, iter-1);
 	}

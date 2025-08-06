@@ -88,20 +88,29 @@ vec lerp(vec a, vec b, double c){
 namespace rng{
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_real_distribution<double> uniform(0.0, 1.0);
-	std::normal_distribution<double> normal(0.0, 1.0);
-}
+	std::uniform_real_distribution<double> uniform_gen(0.0, 1.0);
+	std::normal_distribution<double> gaussian_gen(0.0, 1.0);
 
-vec random_vec(){
-	while(true){
-		vec v = {
-			rng::uniform(rng::gen)*2.0 - 1.0,
-			rng::uniform(rng::gen)*2.0 - 1.0,
-			rng::uniform(rng::gen)*2.0 - 1.0,
-		};
+	vec uniform(){
+		while(true){
+			vec v = {
+				rng::uniform_gen(rng::gen)*2.0 - 1.0,
+				rng::uniform_gen(rng::gen)*2.0 - 1.0,
+				rng::uniform_gen(rng::gen)*2.0 - 1.0,
+			};
 
-		if(v.mag() <= 1.0 && v.mag() > 1e-10)
-			return v.norm();
+			if(v.mag() <= 1.0 && v.mag() > 1e-10) return v;
+		}
+	}
+
+	vec uniform_norm(){
+		vec v = uniform();
+		return v.norm();
+	}
+
+	vec gaussian(){
+		vec v = uniform_norm();
+		return v * gaussian_gen(rng::gen);
 	}
 }
 
