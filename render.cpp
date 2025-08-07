@@ -205,8 +205,14 @@ int main(){
 		}
 
 		if(use_global) for(int64_t i=0; i<camera.chunk; ++i){
+			/*
 			double x_coord = rng::base()*camera.w-camera.w/2,
 				   y_coord = rng::base()*camera.h-camera.h/2;
+		   */
+
+			int64_t slice_coord = (i+x*camera.chunk) % (camera.w*camera.h);
+			double x_coord = rng::base() + slice_coord%camera.w - camera.w/2;
+			double y_coord = rng::base() + slice_coord/camera.w - camera.h/2;
 
 			ray r;
 

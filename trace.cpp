@@ -72,17 +72,35 @@ void forward_trace(ray &r, int iter){
 		ray R;
 		R.p = t.p; R.t = r.t;
 		R.d = (camera.p-t.p).norm();
+
+		// lambertian
 		R.c = r.c * R.d.dot(t.norm);
+		//R.c = r.c;
 		add(R);
+
+		/*
+		vec sf = (R.d-r.d).norm();
+		sf = sf.lerp(t.norm, -t.mat.shine/(1.1-t.mat.shine)).norm();
+		vec x = r.d - sf * 2.0 * r.d.dot(sf);
+		double y = x.dot(t.norm);
+		R.c = r.c * y;
+		if(t.mat.shine > .5) R.c *= 10;
+		if(y > 0.0) add(R);
+		*/
 
 		r.p = t.p;
 
 		// lambertian
-		// r.d = (t.norm+rng::uniform_norm()).norm();
+		r.d = (t.norm+rng::uniform_norm()).norm();
 
+		//r.d = rng::uniform_norm();
+		//if(r.d.dot(t.norm) < 0.0) r.d *= -1;
+
+		/*
 		vec surface = ((t.norm+rng::uniform_norm()).norm()-r.d).norm();
 		surface = surface.lerp(t.norm, t.mat.shine).norm();
 		r.d = r.d - surface * 2.0 * r.d.dot(surface);
+		*/
 
 		if(iter > 0) forward_trace(r, iter-1);
 	}
@@ -97,6 +115,10 @@ bool backward_trace(ray &r, int iter){
 		r.p = t.p;
 
 		vec surface = ((t.norm+rng::uniform_norm()).norm()-r.d).norm();
+		
+		//vec surface = rng::uniform_norm();
+		//if(surface.dot(t.norm) < 0.0) surface *= -1;
+
 		surface = surface.lerp(t.norm, t.mat.shine).norm();
 		r.d = r.d - surface * 2.0 * r.d.dot(surface);
 
