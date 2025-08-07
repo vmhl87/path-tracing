@@ -70,24 +70,29 @@ void forward_trace(ray &r, int iter){
 		r.c *= t.mat.c;
 
 		ray R;
-		
 		R.p = t.p; R.t = r.t;
 		R.d = (camera.p-t.p).norm();
 		R.c = r.c * R.d.dot(t.norm);
-
 		add(R);
 
 		r.p = t.p;
 
-		// vec reflect = r.d - t.norm * 2.0 * r.d.dot(t.norm);
-		// reflect = (reflect+rng::uniform_norm()*t.mat.gloss).norm();
+		// lambertian
+		// r.d = (t.norm+rng::uniform_norm()).norm();
 
-		// shine should change this distribution
-		r.d = (t.norm+rng::uniform_norm()).norm();
+		// multimodal (experimental)
+		vec surface = rng::uniform_norm();
+		if(t.norm.dot(surface) < 0.0) surface *= -1.0;
+		surface = surface.lerp(t.norm, t.mat.shine).norm();
+		r.d = r.d - surface * 2.0 * r.d.dot(surface);
+		r.c *= surface.dot(t.norm);
 
 		if(iter > 0) forward_trace(r, iter-1);
 	}
 }
+
+// const char *model = "lambert";
+const char *model = "multimodal";
 
 bool backward_trace(ray &r, int iter){
 	touch t = hit(r);
@@ -97,11 +102,18 @@ bool backward_trace(ray &r, int iter){
 
 		r.p = t.p;
 
-		// vec reflect = r.d - t.norm * 2.0 * r.d.dot(t.norm);
-		// reflect = (reflect+rng::uniform_norm()*t.mat.gloss).norm();
+		if(model == "lambert"){
+			// lambertian (classic)
+			r.d = (t.norm+rng::uniform_norm()).norm();
 
-		// shine should change this distribution
-		r.d = (t.norm+rng::uniform_norm()).norm();
+		}else{
+			// multimodal (experimental)
+			vec surface = rng::uniform_norm();
+			if(t.norm.dot(surface) < 0.0) surface *= -1.0;
+			surface = surface.lerp(t.norm, t.mat.shine).norm();
+			r.d = r.d - surface * 2.0 * r.d.dot(surface);
+			r.c *= surface.dot(t.norm);
+		}
 
 		if(iter > 0) return backward_trace(r, iter-1);
 
@@ -109,7 +121,8 @@ bool backward_trace(ray &r, int iter){
 
 	}else{
 		vec sky = {0, 1, 0};
-		r.c *= r.d.dot(sky);
-		return true;
+		double x = r.d.dot(sky)*0.5 + 0.5;
+		r.c *= x;
+		return x > 0.0;
 	}
 }
