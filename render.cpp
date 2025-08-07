@@ -97,14 +97,14 @@ handle(cam)
 end;
 
 handle(noisy_vec)
-	case(p) c.read_vec();
+	case(p) c.read_vec();  // deprecated
 	case(r) c.read_double();
 	case(t) c.read_int();
 end;
 
 handle(light)
-	case(p) handle_noisy_vec(c);
-	case(d) handle_noisy_vec(c);
+	case(p) handle_noisy_vec(c); res.p.p = c.read_vec();
+	case(d) handle_noisy_vec(c); res.d.p = c.read_vec();
 	case(c) c.read_vec();
 	case(granular) c.read_int();
 end;
