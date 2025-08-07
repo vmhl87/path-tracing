@@ -188,8 +188,8 @@ struct dir{
 	vec f, u, s;
 
 	void init(){
-		s = u.cross(f);
-		u = f.cross(s);
+		s = u.cross(f).norm();
+		u = f.cross(s).norm();
 	}
 
 	vec project(const vec &v){
@@ -225,8 +225,9 @@ struct cam{
 	unsigned char *image = nullptr;
 	
 	// settings
-	int64_t iter = 10000,
-			report = 0;
+	int64_t iter = 500,
+			report = 0,
+			chunk = 10000;
 	int bounces = 5;
 	double exposure = 1.0,
 		   gamma = 0.0;
@@ -261,7 +262,7 @@ struct cam{
 	// save_raw_image: in order to post-process brightness, etc
 	
 	void write(const char *iname, const char *rname, double progress){
-		double exp2 = iter * progress / w / h / exposure;
+		double exp2 = iter * chunk * progress / w / h / exposure;
 
 		auto bake = [&] (double v){
 			double energy = v/exp2;

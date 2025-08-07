@@ -93,6 +93,7 @@ handle(cam)
 	case(gamma) c.read_double();
 	case(bounces) c.read_int();
 	case(adjust) c.read_int();
+	case(chunk) c.read_int64_t();
 end;
 
 handle(noisy_vec)
@@ -179,40 +180,27 @@ int main(){
 	std::normal_distribution<double> d(0.0, 1.0);
 
 	bool use_global = global.mag() > 1e-18;
-	
+
 	for(int64_t x=0; x<camera.iter; ++x){
 		for(const light &l : lights){
 			if(l.granular > 1 && x%l.granular) continue;
 
-			ray r; l(r);
-
-			forward_trace(r, camera.bounces);
+			for(int64_t i=0; i<camera.chunk; ++i){
+				ray r; l(r), forward_trace(r, camera.bounces);
+			}
 		}
 
-		if(use_global){
-			// consider seeding random coords
-			/*
-			int64_t coord = x % (camera.w*camera.h),
-					x_coord = coord % camera.w,
-					y_coord = coord / camera.w;
-			*/
-
-			int x_coord = std::floor(rng::base() * camera.w),
-				y_coord = std::floor(rng::base() * camera.h);
+		if(use_global) for(int64_t i=0; i<camera.chunk; ++i){
+			double x_coord = rng::base()*camera.w-camera.w/2,
+				   y_coord = rng::base()*camera.h-camera.h/2;
 
 			ray r;
 
-			r.c = global;
-			r.p = camera.p;
-			r.d = camera.d.project({
-				(x_coord-camera.w/2 + rng::base()) / camera.c,
-				(camera.h/2-y_coord + rng::base()) / camera.c,
-				1,
-			}).norm();
+			r.c = global, r.p = camera.p;
+			r.d = camera.d.project({x_coord, 1-y_coord, camera.c}).norm();
 
 			if(backward_trace(r, camera.bounces))
-				camera.add(x_coord, y_coord, r.c);
-
+				camera.add(camera.w/2+std::floor(x_coord), camera.h/2+std::floor(y_coord), r.c);
 		}
 
 		if(camera.report && x%camera.report == 0)
