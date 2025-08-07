@@ -13,12 +13,14 @@ struct touch{
 
 struct sphere{
 	double r;
-	vec p;
+	vec p, d;
 
 	material mat;
 
 	void hit(const ray &o, touch &res) const{
-		vec oc = o.p-p;
+		vec P = p + d*(o.t-0.5);
+
+		vec oc = o.p-P;
 
 		double b = 2.0*oc.dot(o.d),
 			   c = oc.dot(oc)-r*r,
@@ -34,7 +36,7 @@ struct sphere{
 			else res.hit = false;
 
 			if(res.hit)
-				res.norm = ((res.p = o.p+o.d*res.d)-p).norm(),
+				res.norm = ((res.p = o.p+o.d*res.d)-P).norm(),
 				res.mat = mat;
 		}
 	}
@@ -69,7 +71,7 @@ void forward_trace(ray &r, int iter){
 
 		ray R;
 		
-		R.p = t.p;
+		R.p = t.p; R.t = r.t;
 		R.d = (camera.p-t.p).norm();
 		R.c = r.c * R.d.dot(t.norm);
 

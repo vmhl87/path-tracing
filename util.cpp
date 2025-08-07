@@ -136,6 +136,7 @@ using color = vec;
 color global = {0, 0, 0};
 
 struct ray{
+	double t;
 	vec p, d;
 	color c;
 
@@ -163,7 +164,7 @@ struct noisy_vec{
 struct light{
 	noisy_vec p, d;
 	color c = {1, 1, 1};
-	int granular = 1;
+	int granular = 1, visible = 0;
 
 	void operator()(ray &r) const{
 		r.p = p(), r.d = d().norm();
@@ -174,13 +175,13 @@ struct light{
 std::vector<light> lights;
 
 struct material{
+	double shine = 0, gloss = 0;
 	color c;
 
 	std::string out(){
-		return c.out();
-		// std::stringstream s;
-		// s << "{c: " << c.out() << ", rough: " << rough << '}';
-		// return s.str();
+		std::stringstream s;
+		s << "{c: " << c.out() << ", shine: " << shine << ", gloss: " << gloss << '}';
+		return s.str();
 	}
 };
 

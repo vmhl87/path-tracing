@@ -106,17 +106,21 @@ handle(light)
 	case(p) handle_noisy_vec(c); res.p.p = c.read_vec();
 	case(d) handle_noisy_vec(c); res.d.p = c.read_vec();
 	case(c) c.read_vec();
+	case(visible) 1;
 	case(granular) c.read_int();
 end;
 
 handle(material)
-	case(c) c.read_vec();
+	case(c) c.read_vec();  // deprecated
+	case(shine) c.read_double();
+	case(gloss) c.read_double();
 end;
 
 handle(sphere)
 	case(p) c.read_vec();
+	case(d) c.read_vec();
 	case(r) c.read_double();
-	case(mat) handle_material(c);
+	case(mat) handle_material(c); res.mat.c = c.read_vec();
 end;
 
 #undef handle
@@ -186,7 +190,17 @@ int main(){
 			if(l.granular > 1 && x%l.granular) continue;
 
 			for(int64_t i=0; i<camera.chunk; ++i){
-				ray r; l(r), forward_trace(r, camera.bounces);
+				ray r; l(r); r.t = rng::base();
+
+				if(l.visible){
+					ray R;
+					R.p = r.p;
+					R.d = (camera.p-r.p).norm();
+					R.c = r.c;
+					add(R);
+				}
+
+				forward_trace(r, camera.bounces);
 			}
 		}
 
@@ -196,7 +210,7 @@ int main(){
 
 			ray r;
 
-			r.c = global, r.p = camera.p;
+			r.c = global, r.p = camera.p; r.t = rng::base();
 			r.d = camera.d.project({x_coord, 1-y_coord, camera.c}).norm();
 
 			if(backward_trace(r, camera.bounces))

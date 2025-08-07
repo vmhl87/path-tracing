@@ -1,64 +1,7 @@
 ![rendered image](image.png)
 
-```
-camera
-	p 8 1.5 -10
-	d
-		f -8 -1.5 10
-		u 0 1 0
-	
-	# export res
-	w 1600
-	h 800
-	c 2000
+uses the same geometry as demo2,3,4,5 and similar lighting setup to demo4.
 
-	# proto res
-		w 800
-		h 400
-		c 1000
+however the lighting computations have been fixed, removing pseudo-subsurface scattering.
 
-	# export samples
-	iter	3000000000
-
-	# proto samples
-		iter	10000000
-		report	3000000
-
-	exposure .5
-	bounces 3
-	gamma 3
-
-# ground
-sphere
-	p 0 -101.5 0
-	r 100
-	mat
-		c .9 .9 .9
-		shine .25
-
-# black
-sphere
-	p 0 0 0
-	r .25
-	mat
-		c .1 .1 .1
-		shine 0
-
-# red
-sphere
-	p 2 0 0
-	r 1
-	mat
-		c 1 .5 .5
-		shine .1
-
-# mirror
-sphere
-	p -2 0 0
-	r 1
-	mat
-		c .95 .95 .95
-		shine 1
-
-done
-```
+the setup uses four lights instead of one: the main laser is (near) identical to previous, but two glow lights are added for environmental effects: the ground is slightly illuminated, bringing out the shadow, and additionally the white sphere has a little bit of bloom around the light spot. lastly, a very dim global skylight adds a bit more texture to the backdrop.
