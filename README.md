@@ -1,3 +1,3 @@
 ![rendered image](final-render.png)
 
-Rendered in 8m12.965s on Intel i5-8250U (8) @ 800MHz
+Rendered (singlethreaded) in 10m0.157s on AMD Ryzen 5 2600 (12) @ 3.400GHz

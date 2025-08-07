@@ -92,6 +92,7 @@ handle(cam)
 	case(exposure) c.read_double();
 	case(gamma) c.read_double();
 	case(bounces) c.read_int();
+	case(adjust) c.read_int();
 end;
 
 handle(noisy_vec)
@@ -109,7 +110,6 @@ end;
 
 handle(material)
 	case(c) c.read_vec();
-	case(shine) c.read_double();
 end;
 
 handle(sphere)
@@ -122,13 +122,16 @@ end;
 #undef case
 #undef end
 
-#define case(x) }else if(c.s == #x){
+#define case(x) }else if(S == #x){
 
 void handle(node &c){
-	if(c.s == ""){
+	std::istringstream V(c.s);
+	std::string S; V >> S;
+	if(S == ""){
 		case(camera) camera = handle_cam(c);
 		case(sphere) spheres.push_back(handle_sphere(c));
 		case(light) lights.push_back(handle_light(c));
+		case(global) global = c.read_vec();
 	}
 }
 
@@ -174,59 +177,47 @@ int main(){
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::normal_distribution<double> d(0.0, 1.0);
+
+	bool use_global = global.mag() > 1e-18;
 	
-	for(int64_t x=0; x<camera.iter; ++x)
+	for(int64_t x=0; x<camera.iter; ++x){
 		for(const light &l : lights){
 			if(l.granular > 1 && x%l.granular) continue;
 
 			ray r; l(r);
 
-			trace(r, camera.bounces);
-
-			if(camera.report && x%camera.report == 0)
-				camera.write("image.bmp", "image.raw", (double) x / camera.iter);
+			forward_trace(r, camera.bounces);
 		}
 
-		//ray r; r.c = {1, 1, 1};
+		if(use_global){
+			// consider seeding random coords
+			/*
+			int64_t coord = x % (camera.w*camera.h),
+					x_coord = coord % camera.w,
+					y_coord = coord / camera.w;
+			*/
 
-		/*
-		// skylight
-		r.p = rng::uniform()*0.15 + (vec){0, 5, 0};
-		r.d = (rng::uniform_norm() + (vec){0, -1, 0}).norm();
-		*/
+			int x_coord = std::floor(rng::base() * camera.w),
+				y_coord = std::floor(rng::base() * camera.h);
 
-		/*
-		// laser
-		r.p = rng::gaussian()*0.02 + (vec){0, 0.5, 0};
-		r.d = ((vec){-2, 0, 0} - (vec){0, 0.5, 0}).norm();
-		*/
+			ray r;
 
-		/*
-		vec X = {0, 0.5, 0};
-		X -= {-2, 0, 0};
-		X = X.norm();
+			r.c = global;
+			r.p = camera.p;
+			r.d = camera.d.project({
+				(x_coord-camera.w/2 + rng::base()) / camera.c,
+				(camera.h/2-y_coord + rng::base()) / camera.c,
+				1,
+			}).norm();
 
-		r.p = X*1.1 + (vec){-2, 0, 0} + rng::gaussian() * 0.015;
-		r.d = (rng::uniform_norm() + X*.99).norm();
-		*/
+			if(backward_trace(r, camera.bounces))
+				camera.add(x_coord, y_coord, r.c);
 
-		/*
-		// spotlight from camera
-		r.p = camera.p + rng::uniform()*0.15;
-		r.d = camera.d.project(rng::uniform_norm() + (vec){0, 0, 1}).norm();
-		*/
-
-		/*
-		// combination
-		if(rng::uniform_norm().x > 0 && rng::uniform_norm().x > 0){
-			r.p = camera.p + (vec){0, 2, 0} + rng::gaussian() * 0.015;
-			vec center = camera.p + camera.d.f * 3.0;
-			r.d = (center-r.p).norm();
-		}else{
-			r.p = rng::uniform_norm()*0.15 + (vec){2.1, 5, 3.2};
-			r.d = (rng::uniform_norm() + (vec){0, -1, 0}).norm();
 		}
-		*/
+
+		if(camera.report && x%camera.report == 0)
+			camera.write("image.bmp", "image.raw", camera.adjust ? (double) x / camera.iter : 1.0);
+	}
 
 	camera.write("image.bmp", "image.raw", 1.0);
 }

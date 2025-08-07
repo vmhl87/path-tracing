@@ -61,7 +61,7 @@ void add(ray &r){
 	camera.add(r.p, r.c);
 }
 
-void trace(ray &r, int iter){
+void forward_trace(ray &r, int iter){
 	touch t = hit(r);
 
 	if(t.hit){
@@ -76,11 +76,34 @@ void trace(ray &r, int iter){
 		add(R);
 
 		r.p = t.p;
-		r.d = r.d - t.norm * 2.0 * r.d.dot(t.norm);
+
+		// vec reflect = r.d - t.norm * 2.0 * r.d.dot(t.norm);
+		// reflect = (reflect+rng::uniform_norm()*t.mat.gloss).norm();
 
 		// shine should change this distribution
-		r.d = (r.d+rng::uniform_norm()).norm();
+		r.d = (t.norm+rng::uniform_norm()).norm();
 
-		if(iter > 0) trace(r, iter-1);
+		if(iter > 0) forward_trace(r, iter-1);
 	}
+}
+
+bool backward_trace(ray &r, int iter){
+	touch t = hit(r);
+
+	if(t.hit){
+		r.c *= t.mat.c;
+
+		r.p = t.p;
+
+		// vec reflect = r.d - t.norm * 2.0 * r.d.dot(t.norm);
+		// reflect = (reflect+rng::uniform_norm()*t.mat.gloss).norm();
+
+		// shine should change this distribution
+		r.d = (t.norm+rng::uniform_norm()).norm();
+
+		if(iter > 0) return backward_trace(r, iter-1);
+
+		return false;
+
+	}else return true;
 }

@@ -1,6 +1,6 @@
 all: test
 
-final: run .proc image.png
+final: run .proc final-render.png
 
 debug:
 	g++ render.cpp -o ./run -g -lm -Wall
@@ -10,14 +10,15 @@ run: *.cpp
 	g++ render.cpp -o ./run -lm -O2 -march=native -Wall
 
 test: run
-	./run < scene.conf
+	bash -c "time ./run < scene.conf"
+	convert image.bmp image.png
 
 .proc: scene.conf run
 	touch .proc
 	cat format.sh | rg -v "^\s*$$"
 	bash format.sh
 
-image.png: image.bmp
+final-render.png: image.bmp
 	convert image.bmp image.png
 	cp image.png final-render.png
 

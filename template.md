@@ -1,3 +1,3 @@
 ![rendered image](final-render.png)
 
-Rendered in TIME on CPU
+Rendered (singlethreaded) in TIME on CPU

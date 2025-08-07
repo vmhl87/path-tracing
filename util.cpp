@@ -91,7 +91,11 @@ namespace rng{
 	std::uniform_real_distribution<double> uniform_gen(0.0, 1.0);
 	std::normal_distribution<double> gaussian_gen(0.0, 1.0);
 
-	vec uniform() {
+	double base(){
+		return rng::uniform_gen(rng::gen);
+	}
+
+	vec uniform(){
 		double u = rng::uniform_gen(rng::gen) * 2.0 - 1.0;
 		double phi = rng::uniform_gen(rng::gen) * 2.0 * M_PI;
 
@@ -128,6 +132,8 @@ namespace rng{
 }
 
 using color = vec;
+
+color global = {0, 0, 0};
 
 struct ray{
 	vec p, d;
@@ -168,13 +174,13 @@ struct light{
 std::vector<light> lights;
 
 struct material{
-	double shine;
 	color c;
 
 	std::string out(){
-		std::stringstream s;
-		s << "{c: " << c.out() << ", shine: " << shine << '}';
-		return s.str();
+		return c.out();
+		// std::stringstream s;
+		// s << "{c: " << c.out() << ", rough: " << rough << '}';
+		// return s.str();
 	}
 };
 
@@ -224,6 +230,7 @@ struct cam{
 	int bounces = 5;
 	double exposure = 1.0,
 		   gamma = 0.0;
+	int adjust = 1;
 
 	void init(){
 		d.init();
