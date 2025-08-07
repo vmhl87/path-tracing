@@ -107,5 +107,9 @@ bool backward_trace(ray &r, int iter){
 
 		return false;
 
-	}else return true;
+	}else{
+		vec sky = {0, 1, 0};
+		r.c *= r.d.dot(sky);
+		return true;
+	}
 }
