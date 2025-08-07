@@ -220,7 +220,7 @@ struct dir{
 struct cam{
 	vec p;
 	dir d;
-	int w, h;
+	int w, h, *counts;
 	double c;
 	color *dat = nullptr;
 	unsigned char *image = nullptr;
@@ -238,6 +238,19 @@ struct cam{
 		d.init();
 		dat = new color[w*h];
 		image = new unsigned char[w*h*3];
+		counts = new int[w*h];
+	}
+
+	void pick(int &x, int &y){
+		int x1 = std::floor(rng::base()*w),
+			y1 = std::floor(rng::base()*h),
+			x2 = std::floor(rng::base()*w),
+			y2 = std::floor(rng::base()*h);
+
+		if(counts[x1+y1*w] > counts[x2+y2*w]) x = x2, y = y2;
+		else x = x1, y = y1;
+
+		++counts[x+y*w];
 	}
 
 	color& at(int x, int y){

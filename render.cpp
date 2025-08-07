@@ -205,22 +205,21 @@ int main(){
 		}
 
 		if(use_global) for(int64_t i=0; i<camera.chunk; ++i){
-			/*
-			double x_coord = rng::base()*camera.w-camera.w/2,
-				   y_coord = rng::base()*camera.h-camera.h/2;
-		   */
-
-			int64_t slice_coord = (i+x*camera.chunk) % (camera.w*camera.h);
-			double x_coord = rng::base() + slice_coord%camera.w - camera.w/2;
-			double y_coord = rng::base() + slice_coord/camera.w - camera.h/2;
+			// load balanced
+			int x_coord, y_coord; camera.pick(x_coord, y_coord);
 
 			ray r;
 
 			r.c = global, r.p = camera.p; r.t = rng::base();
-			r.d = camera.d.project({x_coord, 1-y_coord, camera.c}).norm();
+			r.d = camera.d.project({
+				x_coord-camera.w/2 + rng::base(),
+				1+camera.h/2-y_coord + rng::base(),
+				camera.c,
+			}).norm();
 
 			if(backward_trace(r, camera.bounces))
-				camera.add(camera.w/2+std::floor(x_coord), camera.h/2+std::floor(y_coord), r.c);
+				camera.add(x_coord, y_coord, r.c);
+				//camera.add(camera.w/2+std::floor(x_coord), camera.h/2+std::floor(y_coord), r.c);
 		}
 
 		if(camera.report && x%camera.report == 0)
