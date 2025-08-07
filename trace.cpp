@@ -80,19 +80,13 @@ void forward_trace(ray &r, int iter){
 		// lambertian
 		// r.d = (t.norm+rng::uniform_norm()).norm();
 
-		// multimodal (experimental)
-		vec surface = rng::uniform_norm();
-		if(t.norm.dot(surface) < 0.0) surface *= -1.0;
+		vec surface = ((t.norm+rng::uniform_norm()).norm()-r.d).norm();
 		surface = surface.lerp(t.norm, t.mat.shine).norm();
 		r.d = r.d - surface * 2.0 * r.d.dot(surface);
-		r.c *= surface.dot(t.norm);
 
 		if(iter > 0) forward_trace(r, iter-1);
 	}
 }
-
-// const char *model = "lambert";
-const char *model = "multimodal";
 
 bool backward_trace(ray &r, int iter){
 	touch t = hit(r);
@@ -102,27 +96,16 @@ bool backward_trace(ray &r, int iter){
 
 		r.p = t.p;
 
-		if(model == "lambert"){
-			// lambertian (classic)
-			r.d = (t.norm+rng::uniform_norm()).norm();
-
-		}else{
-			// multimodal (experimental)
-			vec surface = rng::uniform_norm();
-			if(t.norm.dot(surface) < 0.0) surface *= -1.0;
-			surface = surface.lerp(t.norm, t.mat.shine).norm();
-			r.d = r.d - surface * 2.0 * r.d.dot(surface);
-			r.c *= surface.dot(t.norm);
-		}
+		vec surface = ((t.norm+rng::uniform_norm()).norm()-r.d).norm();
+		surface = surface.lerp(t.norm, t.mat.shine).norm();
+		r.d = r.d - surface * 2.0 * r.d.dot(surface);
 
 		if(iter > 0) return backward_trace(r, iter-1);
 
 		return false;
 
 	}else{
-		vec sky = {0, 1, 0};
-		double x = r.d.dot(sky)*0.5 + 0.5;
-		r.c *= x;
-		return x > 0.0;
+		r.c *= r.d.y*0.5 + 0.5;
+		return true;
 	}
 }
