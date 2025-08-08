@@ -73,72 +73,22 @@ void forward_trace(ray &r, int iter){
 		R.p = t.p; R.t = r.t;
 		R.d = (camera.p-t.p).norm();
 
-		// lambertian
-		//R.c = r.c * R.d.dot(t.norm);
-		//R.c = r.c;
-		//add(R);
-
-		/*
-		vec sf = (R.d-r.d).norm();
-		sf = sf.lerp(t.norm, -t.mat.shine/(1.0-t.mat.shine)).norm();
-		vec x = r.d - sf * 2.0 * r.d.dot(sf);
-		double y = x.dot(t.norm);
-		R.c = r.c * y * 3.14;
-		//R.c = r.c * 3.14;
-		if(y > 0.0) add(R);
-		*/
-
-		double vol = M_PI * 0.5 / (9.0 * t.mat.shine + 3.0);
+		//double vol = 1.0 / (t.mat.shine + 1.0);
 
 		vec sf = (R.d-r.d).norm();
-
-		// better expansion
-		//sf = sf.lerp(t.norm, -1);
-		/*
-		double Y = sf.dot(t.norm),
-			   X = std::sqrt(1.0 - Y*Y),
-			   Z = (Y*Y-0.5)/Y;
-		sf = (sf + t.norm*(Z-Y)).norm();
-		*/
-
-		//R.c = r.c * std::pow(sf.dot(t.norm), t.mat.shine) / vol;
-		double D = sf.dot(t.norm); D = std::max(0.0, 2.0*D*D - 1.0);
-		R.c = r.c * std::pow(D, t.mat.shine) / vol;
-
+		R.c = r.c * std::pow(sf.dot(t.norm), t.mat.shine) * (t.mat.shine + 1.0);
 		add(R);
-		//vec x = r.d - sf * 2.0 * r.d.dot(sf);
-		//if(y > 0.0) add(R);
 
 		r.p = t.p;
 
-		// lambertian
-		//r.d = (t.norm+rng::uniform_norm()).norm();
+		while(r.d.dot(t.norm) < 0.0){
+			vec surface = rng::uniform_norm();
+			if(surface.dot(t.norm) < 0.0) surface *= -1;
 
-		//r.d = rng::uniform_norm();
-		//if(r.d.dot(t.norm) < 0.0) r.d *= -1;
-
-		//vec surface = ((t.norm+rng::uniform_norm()).norm()-r.d).norm();
-		//surface = surface.lerp(t.norm, t.mat.shine).norm();
-		//r.d = r.d - surface * 2.0 * r.d.dot(surface);
-
-		vec surface = rng::uniform_norm();
-		if(surface.dot(t.norm) < 0.0) surface *= -1;
-
-		// importance sampling..
-		//r.c *= std::pow(surface.dot(t.norm), t.mat.shine) / vol;
-		double d = surface.dot(t.norm); d = std::max(0.0, 2.0*d*d - 1.0);
-		r.c *= std::pow(d, t.mat.shine) / vol;
-
-		// better contraction
-		//surface = surface.lerp(t.norm, 0.5).norm();
-		/*
-		double y = surface.dot(t.norm),
-			   z = std::sqrt((1.0+y) / (1.0-y));
-		surface = (surface + t.norm*(z-y)).norm();
-		*/
-
-		//surface = (surface-r.d).norm();
-		r.d = r.d - surface * 2.0 * r.d.dot(surface);
+			// importance sampling when
+			r.c *= std::pow(surface.dot(t.norm), t.mat.shine) * (t.mat.shine + 1.0);
+			r.d = r.d - surface * 2.0 * r.d.dot(surface);
+		}
 
 		if(iter > 0) forward_trace(r, iter-1);
 	}
@@ -152,31 +102,16 @@ bool backward_trace(ray &r, int iter){
 
 		r.p = t.p;
 
-		//vec surface = ((t.norm+rng::uniform_norm()).norm()-r.d).norm();
+		//double vol = 1.0 / (t.mat.shine + 1.0);
 		
-		double vol = M_PI * 0.5 / (9.0 * t.mat.shine + 3.0);
-		
-		vec surface = rng::uniform_norm();
-		if(surface.dot(t.norm) < 0.0) surface *= -1;
-		
-		// importance sampling..
-		//r.c *= std::pow(surface.dot(t.norm), t.mat.shine) / vol;
-		double d = surface.dot(t.norm); d = std::max(0.0, 2.0*d*d - 1.0);
-		r.c *= std::pow(d, t.mat.shine) / vol;
+		while(r.d.dot(t.norm) < 0.0){
+			vec surface = rng::uniform_norm();
+			if(surface.dot(t.norm) < 0.0) surface *= -1;
 
-		// better contraction
-		//surface = surface.lerp(t.norm, 0.5).norm();
-		/*
-		double y = surface.dot(t.norm),
-			   z = std::sqrt((1.0+y) / (1.0-y));
-		surface = (surface + t.norm*(z-y)).norm();
-		*/
-
-		//surface = (surface-r.d).norm();
-		r.d = r.d - surface * 2.0 * r.d.dot(surface);
-
-		//surface = surface.lerp(t.norm, t.mat.shine).norm();
-		//r.d = r.d - surface * 2.0 * r.d.dot(surface);
+			// importance sampling when
+			r.c *= std::pow(surface.dot(t.norm), t.mat.shine) * (t.mat.shine + 1.0);
+			r.d = r.d - surface * 2.0 * r.d.dot(surface);
+		}
 
 		if(iter > 0) return backward_trace(r, iter-1);
 

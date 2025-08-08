@@ -126,7 +126,7 @@ end;
 
 handle(material)
 	case(c) c.read_vec();  // deprecated
-	case(shine) c.read_double();
+	case(shine) c.read_double();  // res.correct();
 	case(gloss) c.read_double();
 end;
 

@@ -182,9 +182,37 @@ struct light{
 
 std::vector<light> lights;
 
+double interp[][2] = {
+	{0.0,	7.8},
+	{0.125,	6.2},
+	{0.25,	5.7},
+	{0.5,	5.1},
+	{1.0,	4.2},
+	{2.0,	3.6},
+	{3.0,	3.6},
+	{4.0,	3.4},
+	{8.0,	3.2},
+	{16.0,	3.2},
+	{32.0,	3.0},
+	{128.0,	2.8},
+};
+
 struct material{
 	double shine = 0, gloss = 0;
+	//double correction = 7.8;
 	color c;
+
+	/*
+	void correct(){
+		correction = shine < 0.5 ? 7.8 : 2.8;
+		for(int i=0; i<11; ++i){
+			if(shine >= interp[i][0] && shine < interp[i+1][0]){
+				double a = (shine-interp[i][0])/(interp[i+1][0]-interp[i][0]);
+				correction = interp[i+1][1]*a + interp[i][1]*(1-a);
+			}
+		}
+	}
+	*/
 
 	std::string out(){
 		std::stringstream s;
@@ -259,9 +287,9 @@ struct cam{
 			x2 = std::floor(rng::base()*w),
 			y2 = std::floor(rng::base()*h);
 
-		//if(counts[x1+y1*w] > counts[x2+y2*w]) x = x2, y = y2;
-		if((double)counts[x1+y1*w]/(counts[x2+y2*w]+counts[x1+y1*w]) < rng::base())
-			x = x2, y = y2;
+		if(counts[x1+y1*w] > counts[x2+y2*w]) x = x2, y = y2;
+		//if((double)counts[x1+y1*w]/(counts[x2+y2*w]+counts[x1+y1*w]) > rng::base())
+			//x = x2, y = y2;
 		else x = x1, y = y1;
 
 		++counts[x+y*w];
