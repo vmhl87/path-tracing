@@ -22,8 +22,26 @@ final:
 	convert image.bmp image.png
 	cp image.png final-render.png
 
+stash:
+	cp image.raw .image.raw
+
+merge:
+	rm -f .postprocess-cmd
+	touch .postprocess-cmd
+	-rg exposure scene.conf >> .postprocess-cmd
+	-rg gamma scene.conf >> .postprocess-cmd
+	echo read image.raw >> .postprocess-cmd
+	echo read .image.raw >> .postprocess-cmd
+	echo write image.bmp >> .postprocess-cmd
+	echo save image.raw >> .postprocess-cmd
+	echo done >> .postprocess-cmd
+	./postprocess < .postprocess-cmd
+	rm -f .postprocess-cmd
+	rm -f .image.raw
+	convert image.bmp image.png
+
 loop: run
-	bash loop.sh
+	bash .loop.sh
 
 id = -tmp
 demo:
