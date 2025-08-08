@@ -219,7 +219,6 @@ int main(){
 
 			if(backward_trace(r, camera.bounces))
 				camera.add(x_coord, y_coord, r.c);
-				//camera.add(camera.w/2+std::floor(x_coord), camera.h/2+std::floor(y_coord), r.c);
 		}
 
 		if(camera.report && x%camera.report == 0)
