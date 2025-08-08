@@ -29,6 +29,6 @@ id = -tmp
 demo:
 	convert image.bmp image.png
 	mkdir -p "demo$(id)"
-	cp scene.conf image.png "demo$(id)"
+	cp scene.conf image.png image.raw "demo$(id)"
 	sed -e '/CODE/r scene.conf' -e '/CODE/d' template.md \
 		> "demo$(id)/README.md"

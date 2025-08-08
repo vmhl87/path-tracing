@@ -106,8 +106,8 @@ handle(cam)
 
 	case(adjust) c.read_int();
 
-	case(iname) c.read_str();
-	case(rname) c.read_str();
+	case(iname) c.read_str(); res.raw_output = 0;
+	case(rname) c.read_str(); res.raw_output = 1;
 end;
 
 handle(noisy_vec)
@@ -204,7 +204,7 @@ int main(){
 			if(l.granular > 1 && x%l.granular) continue;
 
 			for(int64_t i=0; i<camera.chunk; ++i){
-				ray r; l(r); r.t = rng::base();
+				ray r; l(r); r.t = rng::norm();
 
 				if(l.visible){
 					ray R;
@@ -224,7 +224,7 @@ int main(){
 
 			ray r;
 
-			r.c = global, r.p = camera.p; r.t = rng::base();
+			r.c = global, r.p = camera.p; r.t = rng::norm();
 			r.d = camera.d.project({
 				x_coord-camera.w/2 + rng::base(),
 				1+camera.h/2-y_coord + rng::base(),
@@ -236,8 +236,8 @@ int main(){
 		}
 
 		if(camera.report && x%camera.report == 0)
-			camera.write(camera.adjust ? (double) x / camera.iter : 1.0);
+			camera.write(false, camera.adjust ? (double) x / camera.iter : 1.0);
 	}
 
-	camera.write(1.0);
+	camera.write(true, 1.0);
 }

@@ -19,7 +19,7 @@ int main(){
 	double exposure = 1.0,
 		   gamma = 2.2;
 
-	std::string iname = "";
+	std::string iname = "", rname = "";
 
 	color *dat = nullptr;
 
@@ -34,6 +34,7 @@ int main(){
 		if(x == "gamma") v >> gamma;
 
 		if(x == "write") v >> iname;
+		if(x == "save") v >> rname;
 
 		if(x == "read"){
 			std::string fname; v >> fname;
@@ -82,6 +83,23 @@ int main(){
 	if(iname == ""){
 		std::cerr << "no output file selected\n";
 		exit(1);
+	}
+
+	if(rname != ""){
+		std::ofstream raw(rname.c_str());
+
+		raw << w << ' ' << h << ' ' << samples << '\n';
+
+		for(int i=0; i<w*h; ++i){
+			for(size_t j=0; j<sizeof(double); ++j)
+				raw << ((unsigned char*) &dat[i].r)[j];
+			for(size_t j=0; j<sizeof(double); ++j)
+				raw << ((unsigned char*) &dat[i].g)[j];
+			for(size_t j=0; j<sizeof(double); ++j)
+				raw << ((unsigned char*) &dat[i].b)[j];
+		}
+
+		raw.close();
 	}
 
 	unsigned char *image = new unsigned char[w*h*3];

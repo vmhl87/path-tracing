@@ -96,6 +96,10 @@ namespace rng{
 		return rng::uniform_gen(rng::gen);
 	}
 
+	double norm(){
+		return rng::gaussian_gen(rng::gen);
+	}
+
 	vec uniform(){
 		double u = rng::uniform_gen(rng::gen) * 2.0 - 1.0;
 		double phi = rng::uniform_gen(rng::gen) * 2.0 * M_PI;
@@ -234,6 +238,7 @@ struct cam{
 	double exposure = 1.0,
 		   gamma = 2.2;
 	int adjust = 1;
+	bool raw_output = 0;
 
 	std::string iname = "image.bmp",
 				rname = "image.raw";
@@ -241,8 +246,8 @@ struct cam{
 	void init(){
 		d.init();
 		dat = new color[w*h];
-		image = new unsigned char[w*h*3];
-		counts = new int[w*h];
+		if(!raw_output) image = new unsigned char[w*h*3];
+		if(global.mag() > 1e-18) counts = new int[w*h];
 	}
 
 	void pick(int &x, int &y){
@@ -277,38 +282,43 @@ struct cam{
 			at(x, y) += col;
 	}
 
-	void write(double progress){
-		double exp2 = iter * chunk * progress / w / h / exposure;
+	void write(bool done, double progress){
+		if(raw_output || done){
+			std::ofstream raw(rname.c_str());
 
-		auto bake = [&] (double v){
-			return 255.0 * pow(v/exp2, 1.0/gamma);
-		};
+			raw << w << ' ' << h << ' ' << (int64_t) std::floor(iter*chunk*progress) << '\n';
 
-		auto c = [&] (double v) {
-			return (unsigned char) std::max(0, std::min(255, (int) std::floor(bake(v))));
-		};
+			for(int i=0; i<w*h; ++i){
+				for(size_t j=0; j<sizeof(double); ++j)
+					raw << ((unsigned char*) &dat[i].x)[j];
+				for(size_t j=0; j<sizeof(double); ++j)
+					raw << ((unsigned char*) &dat[i].y)[j];
+				for(size_t j=0; j<sizeof(double); ++j)
+					raw << ((unsigned char*) &dat[i].z)[j];
+			}
 
-		for(int i=0; i<w*h; ++i){
-			image[i*3+2] = c(dat[i].x);
-			image[i*3+1] = c(dat[i].y);
-			image[i*3] = c(dat[i].z);
+			raw.close();
+
 		}
 
-		writeBMP(iname.c_str(), image, w, h);
+		if(!raw_output){
+			double exp2 = iter * chunk * progress / w / h / exposure;
 
-		std::ofstream raw(rname.c_str());
+			auto bake = [&] (double v){
+				return 255.0 * pow(v/exp2, 1.0/gamma);
+			};
 
-		raw << w << ' ' << h << ' ' << (int64_t) std::floor(iter*chunk*progress) << '\n';
+			auto c = [&] (double v) {
+				return (unsigned char) std::max(0, std::min(255, (int) std::floor(bake(v))));
+			};
 
-		for(int i=0; i<w*h; ++i){
-			for(size_t j=0; j<sizeof(double); ++j)
-				raw << ((unsigned char*) &dat[i].x)[j];
-			for(size_t j=0; j<sizeof(double); ++j)
-				raw << ((unsigned char*) &dat[i].y)[j];
-			for(size_t j=0; j<sizeof(double); ++j)
-				raw << ((unsigned char*) &dat[i].z)[j];
+			for(int i=0; i<w*h; ++i){
+				image[i*3+2] = c(dat[i].x);
+				image[i*3+1] = c(dat[i].y);
+				image[i*3] = c(dat[i].z);
+			}
+
+			writeBMP(iname.c_str(), image, w, h);
 		}
-
-		raw.close();
 	}
 };

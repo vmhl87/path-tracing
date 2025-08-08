@@ -26,6 +26,7 @@ cat scene.conf | rg exposure >> .postprocess-cmd
 cat scene.conf | rg gamma >> .postprocess-cmd
 
 echo write image.bmp >> .postprocess-cmd
+echo save image.raw >> .postprocess-cmd
 echo done >> .postprocess-cmd
 
 ./postprocess < .postprocess-cmd

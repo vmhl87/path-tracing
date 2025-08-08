@@ -18,7 +18,7 @@ struct sphere{
 	material mat;
 
 	void hit(const ray &o, touch &res) const{
-		vec P = p + d*(o.t-0.5);
+		vec P = p + d*o.t;
 
 		vec oc = o.p-P;
 
