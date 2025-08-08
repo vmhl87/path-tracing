@@ -259,7 +259,9 @@ struct cam{
 			x2 = std::floor(rng::base()*w),
 			y2 = std::floor(rng::base()*h);
 
-		if(counts[x1+y1*w] > counts[x2+y2*w]) x = x2, y = y2;
+		//if(counts[x1+y1*w] > counts[x2+y2*w]) x = x2, y = y2;
+		if((double)counts[x1+y1*w]/(counts[x2+y2*w]+counts[x1+y1*w]) < rng::base())
+			x = x2, y = y2;
 		else x = x1, y = y1;
 
 		++counts[x+y*w];
