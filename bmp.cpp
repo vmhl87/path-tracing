@@ -32,7 +32,7 @@ typedef struct {
 void writeBMP(const char *filename, const unsigned char *data, int width, int height) {
     FILE *file = fopen(filename, "wb");
     if (!file) {
-        perror("Cannot open file");
+        perror("cannot open image file");
         exit(1);
     }
 

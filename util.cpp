@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <cmath>
 
 #include "bmp.cpp"
@@ -231,8 +232,11 @@ struct cam{
 			chunk = 10000;
 	int bounces = 5;
 	double exposure = 1.0,
-		   gamma = 0.0;
+		   gamma = 2.2;
 	int adjust = 1;
+
+	std::string iname = "image.bmp",
+				rname = "image.raw";
 
 	void init(){
 		d.init();
@@ -273,20 +277,15 @@ struct cam{
 			at(x, y) += col;
 	}
 
-	// save_raw_image: in order to post-process brightness, etc
-	
-	void write(const char *iname, const char *rname, double progress){
+	void write(double progress){
 		double exp2 = iter * chunk * progress / w / h / exposure;
 
 		auto bake = [&] (double v){
-			double energy = v/exp2;
-			if(gamma > 1.0) energy = pow(energy, 1.0/gamma);
-			return 255.0 * energy;
+			return 255.0 * pow(v/exp2, 1.0/gamma);
 		};
 
 		auto c = [&] (double v) {
-			return (unsigned char) std::max(0, std::min(255,
-						(int) std::floor(bake(v))));
+			return (unsigned char) std::max(0, std::min(255, (int) std::floor(bake(v))));
 		};
 
 		for(int i=0; i<w*h; ++i){
@@ -295,6 +294,21 @@ struct cam{
 			image[i*3] = c(dat[i].z);
 		}
 
-		writeBMP(iname, image, w, h);
+		writeBMP(iname.c_str(), image, w, h);
+
+		std::ofstream raw(rname.c_str());
+
+		raw << w << ' ' << h << ' ' << (int64_t) std::floor(iter*chunk*progress) << '\n';
+
+		for(int i=0; i<w*h; ++i){
+			for(size_t j=0; j<sizeof(double); ++j)
+				raw << ((unsigned char*) &dat[i].x)[j];
+			for(size_t j=0; j<sizeof(double); ++j)
+				raw << ((unsigned char*) &dat[i].y)[j];
+			for(size_t j=0; j<sizeof(double); ++j)
+				raw << ((unsigned char*) &dat[i].z)[j];
+		}
+
+		raw.close();
 	}
 };

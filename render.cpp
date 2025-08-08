@@ -62,6 +62,13 @@ struct node{
 #undef read
 #undef end
 
+	std::string read_str(){
+		std::istringstream v(s);
+		std::string S; v >> S;
+		std::string x; v >> x;
+		return x;
+	}
+
 };
 
 #define handle(type) type handle_##type(node &n){ \
@@ -87,13 +94,20 @@ handle(cam)
 	case(w) c.read_int();
 	case(h) c.read_int();
 	case(c) c.read_double();
+
 	case(iter) c.read_int64_t();
 	case(report) c.read_int64_t();
+	case(chunk) c.read_int64_t();
+
 	case(exposure) c.read_double();
 	case(gamma) c.read_double();
+
 	case(bounces) c.read_int();
+
 	case(adjust) c.read_int();
-	case(chunk) c.read_int64_t();
+
+	case(iname) c.read_str();
+	case(rname) c.read_str();
 end;
 
 handle(noisy_vec)
@@ -222,8 +236,8 @@ int main(){
 		}
 
 		if(camera.report && x%camera.report == 0)
-			camera.write("image.bmp", "image.raw", camera.adjust ? (double) x / camera.iter : 1.0);
+			camera.write(camera.adjust ? (double) x / camera.iter : 1.0);
 	}
 
-	camera.write("image.bmp", "image.raw", 1.0);
+	camera.write(1.0);
 }
