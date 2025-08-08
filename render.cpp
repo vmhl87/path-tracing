@@ -143,6 +143,17 @@ end;
 
 #define case(x) }else if(S == #x){
 
+void handle_global(node &c){
+	for(node *C : c.child){
+		node &c = *C;
+		std::istringstream V(c.s);
+		std::string S; V >> S;
+		if(S == ""){
+			case(d) global_mag = (global_dir = c.read_vec()).mag()/2.0;
+		}
+	}
+}
+
 void handle(node &c){
 	std::istringstream V(c.s);
 	std::string S; V >> S;
@@ -150,7 +161,7 @@ void handle(node &c){
 		case(camera) camera = handle_cam(c);
 		case(sphere) spheres.push_back(handle_sphere(c));
 		case(light) lights.push_back(handle_light(c));
-		case(global) global = c.read_vec();
+		case(global) global = c.read_vec(); handle_global(c); use_global = true;
 	}
 }
 
@@ -196,8 +207,6 @@ int main(){
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::normal_distribution<double> d(0.0, 1.0);
-
-	bool use_global = global.mag() > 1e-18;
 
 	for(int64_t x=0; x<camera.iter; ++x){
 		for(const light &l : lights){

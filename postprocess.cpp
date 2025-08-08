@@ -75,6 +75,15 @@ int main(){
 		}
 	}
 
+	while(samples > 1e10){
+		samples /= 16;
+		
+		for(int i=0; i<w*h; ++i)
+			dat[i].r /= 16,
+			dat[i].g /= 16,
+			dat[i].b /= 16;
+	}
+
 	if(w == -1){
 		std::cerr << "no RAW files loaded\n";
 		exit(1);

@@ -127,7 +127,7 @@ bool backward_trace(ray &r, int iter){
 		return false;
 
 	}else{
-		r.c *= r.d.y*0.5 + 0.5;
+		r.c *= r.d.dot(global_dir)*global_mag + 1.0-global_mag;
 		return true;
 	}
 }

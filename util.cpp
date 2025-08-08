@@ -139,6 +139,9 @@ namespace rng{
 using color = vec;
 
 color global = {0, 0, 0};
+vec global_dir = {0, 0, 0};
+double global_mag = 0.0;
+bool use_global = 0;
 
 struct ray{
 	double t;
@@ -247,7 +250,7 @@ struct cam{
 		d.init();
 		dat = new color[w*h];
 		if(!raw_output) image = new unsigned char[w*h*3];
-		if(global.mag() > 1e-18) counts = new int[w*h];
+		if(use_global) counts = new int[w*h];  // TODO change if bidirectional
 	}
 
 	void pick(int &x, int &y){

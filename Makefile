@@ -25,13 +25,28 @@ final:
 stash:
 	cp image.raw .image.raw
 
-merge:
+merge: postprocess
+	test -f .image.raw
 	rm -f .postprocess-cmd
 	touch .postprocess-cmd
 	-rg exposure scene.conf >> .postprocess-cmd
 	-rg gamma scene.conf >> .postprocess-cmd
 	echo read image.raw >> .postprocess-cmd
 	echo read .image.raw >> .postprocess-cmd
+	echo write image.bmp >> .postprocess-cmd
+	echo save image.raw >> .postprocess-cmd
+	echo done >> .postprocess-cmd
+	./postprocess < .postprocess-cmd
+	rm -f .postprocess-cmd
+	rm -f .image.raw
+	convert image.bmp image.png
+
+reproc:
+	rm -f .postprocess-cmd
+	touch .postprocess-cmd
+	-rg exposure scene.conf >> .postprocess-cmd
+	-rg gamma scene.conf >> .postprocess-cmd
+	echo read image.raw >> .postprocess-cmd
 	echo write image.bmp >> .postprocess-cmd
 	echo save image.raw >> .postprocess-cmd
 	echo done >> .postprocess-cmd
