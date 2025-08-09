@@ -129,9 +129,11 @@ handle(material)
 	case(gloss) c.read_double();
 end;
 
+bool use_motion_blur = false;
+
 handle(sphere)
 	case(p) c.read_vec();
-	case(d) c.read_vec();
+	case(d) c.read_vec(); res.blur = true; use_motion_blur = true;
 	case(r) c.read_double();
 	case(mat) handle_material(c); res.mat.c = c.read_vec();
 end;
@@ -199,12 +201,13 @@ int main(){
 
 	for(node *n : nodes) if(n->root) handle(*n);
 
+	rng::init();
 	camera.init();
 
 	for(int64_t x=0; x<camera.iter; ++x){
 		for(const light &l : lights){
 			for(int64_t i=0; i<camera.chunk; ++i){
-				ray r; l(r); r.t = rng::norm();
+				ray r; l(r); if(use_motion_blur) r.t = rng::norm();
 
 				if(l.visible){
 					ray R;
@@ -224,7 +227,7 @@ int main(){
 
 			ray r;
 
-			r.c = global, r.p = camera.p; r.t = rng::norm();
+			r.c = global, r.p = camera.p; if(use_motion_blur) r.t = rng::norm();
 			r.d = camera.d.project({
 				x_coord-camera.w/2 + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
 				camera.h/2-y_coord + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),

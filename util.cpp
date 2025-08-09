@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <climits>
 #include <cmath>
 
 #include "bmp.cpp"
@@ -17,7 +18,7 @@ struct vec{
 
 #undef op
 
-#define op(oper) void operator oper##=(const vec &o){ \
+#define op(oper) inline void operator oper##=(const vec &o){ \
 	x oper##= o.x, y oper##= o.y, z oper##= o.z; }
 
 	op(+) op(-) op(*) op(/)
@@ -31,7 +32,7 @@ struct vec{
 
 #undef op
 
-#define op(oper) void operator oper##=(const double d){ \
+#define op(oper) inline void operator oper##=(const double d){ \
 	x oper##= d, y oper##= d, z oper##= d; }
 
 	op(+) op(-) op(*) op(/)
@@ -88,39 +89,41 @@ vec lerp(vec a, vec b, double c){
 
 namespace rng{
 	std::random_device rd;
-	std::mt19937_64 gen(rd());
-	std::uniform_real_distribution<double> uniform_gen(0.0, 1.0);
+	std::default_random_engine gen(rd());
 	std::normal_distribution<double> gaussian_gen(0.0, 1.0);
 
-	double base(){
-		return rng::uniform_gen(rng::gen);
+	static unsigned long x=123456789, y=362436069, z=521288629, F;
+
+	unsigned long xorshf96(void){
+		unsigned long t;
+		x ^= x << 16;
+		x ^= x >> 5;
+		x ^= x << 1;
+
+		t = x;
+		x = y;
+		y = z;
+		z = t ^ x ^ y;
+
+		return z ^ F;
 	}
 
-	double norm(){
-		return rng::gaussian_gen(rng::gen);
+	void init(){
+		srand(time(NULL));
+		F = rand();
 	}
 
-	vec uniform(){
-		double u = rng::uniform_gen(rng::gen) * 2.0 - 1.0;
-		double phi = rng::uniform_gen(rng::gen) * 2.0 * M_PI;
+	inline double base(){
+		return ((double)xorshf96()/(double)ULONG_MAX);
+	}
 
-		double sqrt_1_minus_u2 = sqrt(1.0 - u * u);
-		
-		vec v = {
-			sqrt_1_minus_u2 * cos(phi),
-			sqrt_1_minus_u2 * sin(phi),
-			u
-		};
-
-		double r_cubed = rng::uniform_gen(rng::gen);
-		double r = pow(r_cubed, 1.0/3.0);
-		
-		return v * r;
+	inline double norm(){
+		return gaussian_gen(gen);
 	}
 
 	vec uniform_norm(){
-		double u = rng::uniform_gen(rng::gen) * 2.0 - 1.0;
-		double phi = rng::uniform_gen(rng::gen) * 2.0 * M_PI;
+		double u = base() * 2.0 - 1.0;
+		double phi = base() * 2.0 * M_PI;
 		double sqrt_1_minus_u2 = sqrt(1.0 - u * u);
 
 		return {
@@ -130,9 +133,12 @@ namespace rng{
 		};
 	}
 
+	vec uniform(){
+		return uniform_norm() * pow(base(), 1.0/3.0);
+	}
+
 	vec gaussian(){
-		vec v = uniform_norm();
-		return v * gaussian_gen(rng::gen);
+		return uniform_norm() * norm();
 	}
 }
 

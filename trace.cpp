@@ -14,11 +14,12 @@ struct touch{
 struct sphere{
 	double r;
 	vec p, d;
+	bool blur = false;
 
 	material mat;
 
 	void hit(const ray &o, touch &res) const{
-		vec P = p + d*o.t;
+		vec P = blur ? p + d*o.t : p;
 
 		vec oc = o.p-P;
 
@@ -31,8 +32,10 @@ struct sphere{
 			double t1 = (-b-std::sqrt(D)) / 2.0,
 				   t2 = (-b+std::sqrt(D)) / 2.0;
 
-			if(t1 > 0.001) res.d = t1, res.hit = true;
-			else if(t2 > 0.001) res.d = t2, res.hit = true;
+			res.hit = true;
+
+			if(t1 > 0.001) res.d = t1;
+			else if(t2 > 0.001) res.d = t2;
 			else res.hit = false;
 
 			if(res.hit)
@@ -71,8 +74,7 @@ void forward_trace(ray &r, int iter){
 	if(t.hit){
 		r.c *= t.mat.c;
 
-		ray R;
-		R.p = t.p; R.t = r.t;
+		ray R; R.p = t.p; R.t = r.t;
 		R.d = (camera.p-t.p).norm();
 
 		vec sf = (R.d-r.d).norm();
@@ -85,10 +87,18 @@ void forward_trace(ray &r, int iter){
 			double costheta = std::pow(rng::base(), 1.0 / (1.0 + t.mat.shine)),
 				   sintheta = std::sqrt(1.0 - costheta*costheta);
 
-			vec par = rng::uniform_norm();
-			par = (par - t.norm*par.dot(t.norm)).norm();
+			double sign = copysign(1.0, t.norm.z);
+			double a = -1.0 / (sign + t.norm.z);
+			double b = t.norm.x * t.norm.y * a;
 
-			vec surface = par*sintheta + t.norm*costheta;
+			double phi = rng::base() * M_PI * 2.0,
+				   cosphi = cos(phi), sinphi = sin(phi);
+
+			vec surface = {
+				sintheta * ((1.0 + sign*t.norm.x*t.norm.x*a)*cosphi + b*sinphi) + t.norm.x*costheta,
+				sintheta * (sign*b*cosphi + (sign+t.norm.y*t.norm.y*a)*sinphi) + t.norm.y*costheta,
+				t.norm.z*costheta - sintheta * (sign*t.norm.x*cosphi + t.norm.y*sinphi),
+			};
 
 			r.d = r.d - surface * 2.0 * r.d.dot(surface);
 
@@ -113,10 +123,18 @@ bool backward_trace(ray &r, int iter){
 			double costheta = std::pow(rng::base(), 1.0 / (1.0 + t.mat.shine)),
 				   sintheta = std::sqrt(1.0 - costheta*costheta);
 
-			vec par = rng::uniform_norm();
-			par = (par - t.norm*par.dot(t.norm)).norm();
+			double sign = copysign(1.0, t.norm.z);
+			double a = -1.0 / (sign + t.norm.z);
+			double b = t.norm.x * t.norm.y * a;
 
-			vec surface = par*sintheta + t.norm*costheta;
+			double phi = rng::base() * M_PI * 2.0,
+				   cosphi = cos(phi), sinphi = sin(phi);
+
+			vec surface = {
+				sintheta * ((1.0 + sign*t.norm.x*t.norm.x*a)*cosphi + b*sinphi) + t.norm.x*costheta,
+				sintheta * (sign*b*cosphi + (sign+t.norm.y*t.norm.y*a)*sinphi) + t.norm.y*costheta,
+				t.norm.z*costheta - sintheta * (sign*t.norm.x*cosphi + t.norm.y*sinphi),
+			};
 
 			r.d = r.d - surface * 2.0 * r.d.dot(surface);
 
