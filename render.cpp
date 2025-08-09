@@ -199,13 +199,7 @@ int main(){
 
 	for(node *n : nodes) if(n->root) handle(*n);
 
-	// backward tracing
-	
 	camera.init();
-
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::normal_distribution<double> d(0.0, 1.0);
 
 	for(int64_t x=0; x<camera.iter; ++x){
 		for(const light &l : lights){
@@ -247,5 +241,5 @@ int main(){
 
 	camera.write(true, 1.0);
 
-	std::cout << "ratio: " << tries/finish << '\n';
+	std::cout << "ratio: " << finish/tries << '\n';
 }
