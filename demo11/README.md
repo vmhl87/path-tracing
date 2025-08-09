@@ -1,3 +1,8 @@
+![rendered image](image.png)
+
+re-render of demo7 but with soft speculars
+
+```
 camera
 	p 8.5 1.9 -10
 	d
@@ -86,3 +91,4 @@ sphere
 	mat 1 .5 .5
 
 done
+```

@@ -16,10 +16,9 @@ bool whitespace(std::string s){
 
 bool comment(std::string s){
 	for(char c : s)
-		if(c != ' ' && c != '\t')
+		if(c == '#') return true;
+		else if(c != ' ' && c != '\t')
 			return false;
-		else if(c == '#')
-			return true;
 
 	return false;
 }
@@ -79,7 +78,7 @@ struct node{
 		std::string S; V >> S; \
 		if(0){
 
-#define end }} return res; }
+#define end }else std::cout << "unused option: " << c.s << '\n'; } return res; }
 
 #define case(x) }else if(S == #x){ res. x =
 
@@ -101,6 +100,7 @@ handle(cam)
 
 	case(exposure) c.read_double();
 	case(gamma) c.read_double();
+	case(blur) c.read_double(); res.use_blur = 1;
 
 	case(bounces) c.read_int();
 
@@ -121,12 +121,11 @@ handle(light)
 	case(d) handle_noisy_vec(c); res.d.p = c.read_vec();
 	case(c) c.read_vec();
 	case(visible) 1;
-	case(granular) c.read_int();
 end;
 
 handle(material)
 	case(c) c.read_vec();  // deprecated
-	case(shine) c.read_double();  // res.correct();
+	case(shine) c.read_double();
 	case(gloss) c.read_double();
 end;
 
@@ -150,7 +149,7 @@ void handle_global(node &c){
 		std::string S; V >> S;
 		if(S == ""){
 			case(d) global_mag = (global_dir = c.read_vec()).mag()/2.0;
-		}
+		}else std::cout << "unused option: " << c.s << '\n';
 	}
 }
 
@@ -162,7 +161,7 @@ void handle(node &c){
 		case(sphere) spheres.push_back(handle_sphere(c));
 		case(light) lights.push_back(handle_light(c));
 		case(global) global = c.read_vec(); handle_global(c); use_global = true;
-	}
+	}else std::cout << "unused option: " << c.s << '\n';
 }
 
 #undef case
@@ -210,8 +209,6 @@ int main(){
 
 	for(int64_t x=0; x<camera.iter; ++x){
 		for(const light &l : lights){
-			if(l.granular > 1 && x%l.granular) continue;
-
 			for(int64_t i=0; i<camera.chunk; ++i){
 				ray r; l(r); r.t = rng::norm();
 
@@ -235,8 +232,8 @@ int main(){
 
 			r.c = global, r.p = camera.p; r.t = rng::norm();
 			r.d = camera.d.project({
-				x_coord-camera.w/2 + rng::base(),
-				1+camera.h/2-y_coord + rng::base(),
+				x_coord-camera.w/2 + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
+				camera.h/2-y_coord + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
 				camera.c,
 			}).norm();
 

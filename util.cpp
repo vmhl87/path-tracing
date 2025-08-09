@@ -172,11 +172,11 @@ struct noisy_vec{
 struct light{
 	noisy_vec p, d;
 	color c = {1, 1, 1};
-	int granular = 1, visible = 0;
+	int visible = 0;
 
 	void operator()(ray &r) const{
 		r.p = p(), r.d = d().norm();
-		r.c = c * (double) granular;
+		r.c = c;
 	}
 };
 
@@ -267,9 +267,11 @@ struct cam{
 			chunk = 10000;
 	int bounces = 5;
 	double exposure = 1.0,
-		   gamma = 2.2;
+		   gamma = 2.2,
+		   blur = 0.0;
 	int adjust = 1;
-	bool raw_output = 0;
+	bool raw_output = 0,
+		 use_blur = 0;
 
 	std::string iname = "image.bmp",
 				rname = "image.raw";
@@ -306,8 +308,8 @@ struct cam{
 		if(coord.z == 0) return;
 		coord /= coord.z;
 		coord *= c;
-		int x = w/2 + std::floor(coord.x),
-			y = h/2 - std::floor(coord.y);
+		int x = w/2 + std::floor(coord.x + (use_blur ? rng::norm()*blur : 0)),
+			y = h/2 - std::floor(coord.y + (use_blur ? rng::norm()*blur : 0));
 
 		if(x >= 0 && x < w && y >= 0 && y < h)
 			at(x, y) += col;
