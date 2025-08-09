@@ -249,4 +249,6 @@ int main(){
 	}
 
 	camera.write(true, 1.0);
+
+	std::cout << "ratio: " << tries/finish << '\n';
 }
