@@ -75,8 +75,6 @@ void forward_trace(ray &r, int iter){
 		R.p = t.p; R.t = r.t;
 		R.d = (camera.p-t.p).norm();
 
-		//double vol = 1.0 / (t.mat.shine + 1.0);
-
 		vec sf = (R.d-r.d).norm();
 		R.c = r.c * std::pow(sf.dot(t.norm), t.mat.shine) * (t.mat.shine + 1.0);
 		add(R);
@@ -84,30 +82,14 @@ void forward_trace(ray &r, int iter){
 		r.p = t.p;
 
 		while(r.d.dot(t.norm) < 0.0){
-
-			/*
-			vec surface;
-
-			if(t.mat.shine < 0.5){
-				surface = rng::uniform_norm();
-				if(surface.dot(t.norm) < 0.0) surface *= -1;
-
-			}else{
-				surface = (t.norm+rng::uniform_norm()).norm();
-				r.c *= std::min(5.0, 0.5/surface.dot(t.norm));
-			}
-			*/
-
 			double costheta = std::pow(rng::base(), 1.0 / (1.0 + t.mat.shine)),
 				   sintheta = std::sqrt(1.0 - costheta*costheta);
 
 			vec par = rng::uniform_norm();
 			par = (par - t.norm*par.dot(t.norm)).norm();
 
-			vec surface = par*costheta + t.norm*sintheta;
+			vec surface = par*sintheta + t.norm*costheta;
 
-			// importance sampling when
-			//r.c *= std::pow(surface.dot(t.norm), t.mat.shine) * (t.mat.shine + 1.0);
 			r.d = r.d - surface * 2.0 * r.d.dot(surface);
 
 			++tries;
@@ -116,7 +98,6 @@ void forward_trace(ray &r, int iter){
 		++finish;
 
 		if(iter > 0) forward_trace(r, iter-1);
-		//if(rng::base() < 0.7) forward_trace(r, iter-1);
 	}
 }
 
@@ -128,33 +109,15 @@ bool backward_trace(ray &r, int iter){
 
 		r.p = t.p;
 
-		//double vol = 1.0 / (t.mat.shine + 1.0);
-		
 		while(r.d.dot(t.norm) < 0.0){
-
-			/*
-			vec surface;
-
-			if(t.mat.shine < 0.5){
-				surface = rng::uniform_norm();
-				if(surface.dot(t.norm) < 0.0) surface *= -1;
-
-			}else{
-				surface = (t.norm+rng::uniform_norm()).norm();
-				r.c *= std::min(5.0, 0.5/surface.dot(t.norm));
-			}
-			*/
-
 			double costheta = std::pow(rng::base(), 1.0 / (1.0 + t.mat.shine)),
 				   sintheta = std::sqrt(1.0 - costheta*costheta);
 
 			vec par = rng::uniform_norm();
 			par = (par - t.norm*par.dot(t.norm)).norm();
 
-			vec surface = (par*costheta + t.norm*sintheta);
+			vec surface = par*sintheta + t.norm*costheta;
 
-			// importance sampling when
-			//r.c *= std::pow(surface.dot(t.norm), t.mat.shine) * (t.mat.shine + 1.0);
 			r.d = r.d - surface * 2.0 * r.d.dot(surface);
 
 			++tries;
