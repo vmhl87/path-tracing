@@ -1,3 +1,3 @@
 ![rendered image](final-render.png)
 
-Rendered in 30 seconds with 10 threads
+Rendered in 5 minutes with 10 threads
