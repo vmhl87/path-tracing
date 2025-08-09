@@ -1,3 +1,8 @@
+![rendered image](image.png)
+
+soft specular material test
+
+```
 camera
 	p 8 1.5 -10
 	d
@@ -24,6 +29,8 @@ camera
 		bounces 0
 		bounces 10
 	bounces 4
+
+	exposure 2
 
 # global
 global .2 .2 .2
@@ -85,3 +92,4 @@ sphere
 		#shine 100000
 
 done
+```
