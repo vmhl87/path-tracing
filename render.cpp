@@ -217,7 +217,87 @@ int main(){
 					add(R);
 				}
 
-				forward_trace(r, camera.bounces);
+				//forward_trace(r, camera.bounces);
+
+				/*
+				{
+					int x_coord = std::floor(rng::base()*camera.w),
+						y_coord = std::floor(rng::base()*camera.h);
+
+					ray r2;
+
+					r2.c = global, r2.p = camera.p; r2.t = r.t;
+					r2.d = camera.d.project({
+						x_coord-camera.w/2 + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
+						camera.h/2-y_coord + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
+						camera.c,
+					}).norm();
+
+					touch t = hit(r2);
+
+					if(t.hit){
+						forward_trace(r, t.p, r2.d, t.norm, t.mat.c, t.mat.shine, x_coord, y_coord, camera.bounces);
+
+					}else forward_trace(r, camera.bounces);
+				};
+				*/
+
+				{
+					int x_coord = std::floor(rng::base()*camera.w),
+						y_coord = std::floor(rng::base()*camera.h);
+
+					ray r2;
+					r2.c = {1, 1, 1}, r2.p = camera.p; r2.t = r.t;
+					r2.d = camera.d.project({
+						x_coord-camera.w/2 + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
+						camera.h/2-y_coord + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
+						camera.c,
+					}).norm();
+
+					// vars (before goto)
+					touch t1, t2, t3;
+					double d;
+					vec energy;
+
+					// hit first surface
+					t1 = hit(r2);
+					if(!t1.hit || t1.mat.shine < 50.1) goto done;
+
+					// scatter once
+					ray r3;
+					r3.p = t1.p; r3.t = r2.t; r3.d = r2.d;
+					while(r3.d.dot(t1.norm) < 0.0) r3.d = scatter(r3.d, t1.norm, t1.mat.shine);
+
+					// hit second surface
+					t2 = hit(r3);
+					if(!t2.hit || t2.mat.shine > 50.1) goto done;
+
+					// orient to light
+					ray r4;
+					r4.p = t2.p; r4.d = (l.p.p-t2.p).norm();
+
+					// see if we reach light
+					t3 = hit(r4);
+					if(t3.hit && t3.d < l.p.p.dist(t2.p)) goto done;
+
+					// normalize by probability distribution
+					//d = (camera.p.distsq(t1.p)) / (t1.p.distsq(t2.p) + t2.p.distsq(l.p.p)) / M_PI / 4.0;
+					//d /= 64.0;
+					//d = 1.0;
+					//d = (camera.p.distsq(t1.p) + t1.p.distsq(t2.p)) / (t2.p.distsq(l.p.p)) / M_PI / 4.0;
+					//d = 1.0 / (t2.p.distsq(l.p.p)) / M_PI / 4.0;
+					//d = 1.0 / (t2.p.distsq(l.p.p));
+					//d = 8.0 * t2.norm.dot(r4.d) / (t2.p.distsq(l.p.p));
+					d = 1.0 / (t2.p.distsq(l.p.p));
+					energy = t1.mat.c * t2.mat.c * l.c * scatter(r3.d, r4.d, t2.norm, t2.mat.shine) * d;
+					//energy = t1.mat.c * t2.mat.c * l.c * d;
+
+					camera.add(x_coord, y_coord, energy);
+					r.c = {0, 0, 0};
+
+done:
+					forward_trace(r);
+				};
 			}
 		}
 
@@ -234,8 +314,7 @@ int main(){
 				camera.c,
 			}).norm();
 
-			if(backward_trace(r, camera.bounces))
-				camera.add(x_coord, y_coord, r.c);
+			if(backward_trace(r)) camera.add(x_coord, y_coord, r.c);
 		}
 
 		if(camera.report && x%camera.report == 0)
@@ -243,6 +322,4 @@ int main(){
 	}
 
 	camera.write(true, 1.0);
-
-	std::cout << "ratio: " << finish/tries << '\n';
 }

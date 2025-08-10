@@ -39,8 +39,12 @@ struct vec{
 
 #undef op
 
+	double magsq() const{
+		return x*x + y*y + z*z;
+	}
+
 	double mag() const{
-		return std::sqrt(x*x + y*y + z*z);
+		return std::sqrt(magsq());
 	}
 
 	vec norm() const{
@@ -68,6 +72,10 @@ struct vec{
 		};
 	}
 
+	double distsq(const vec o) const{
+		return (*this-o).magsq();
+	}
+
 	double dist(const vec o) const{
 		return (*this-o).mag();
 	}
@@ -90,31 +98,17 @@ vec lerp(vec a, vec b, double c){
 namespace rng{
 	std::random_device rd;
 	std::default_random_engine gen(rd());
+	std::uniform_real_distribution<double> uniform_gen(0.0, 1.0);
 	std::normal_distribution<double> gaussian_gen(0.0, 1.0);
-
-	static unsigned long x=123456789, y=362436069, z=521288629, F;
-
-	unsigned long xorshf96(void){
-		unsigned long t;
-		x ^= x << 16;
-		x ^= x >> 5;
-		x ^= x << 1;
-
-		t = x;
-		x = y;
-		y = z;
-		z = t ^ x ^ y;
-
-		return z ^ F;
-	}
 
 	void init(){
 		srand(time(NULL));
-		F = rand();
 	}
 
 	inline double base(){
-		return ((double)xorshf96()/(double)ULONG_MAX);
+		//return ((double)xorshf96()/(double)UINT_MAX);
+		//return ((double)rand()/(double)RAND_MAX);
+		return uniform_gen(gen);
 	}
 
 	inline double norm(){

@@ -66,9 +66,32 @@ void add(ray &r){
 	camera.add(r.p, r.c);
 }
 
-double tries, finish;
+vec scatter(vec &incoming, vec &normal, double shine){
+	double costheta = std::pow(rng::base(), 1.0 / (1.0 + shine)),
+		   sintheta = std::sqrt(1.0 - costheta*costheta);
 
-void forward_trace(ray &r, int iter){
+	double sign = copysign(1.0, normal.z);
+	double a = -1.0 / (sign + normal.z);
+	double b = normal.x * normal.y * a;
+
+	double phi = rng::base() * M_PI * 2.0,
+		   cosphi = cos(phi), sinphi = sin(phi);
+
+	vec surface = {
+		sintheta * ((1.0 + sign*normal.x*normal.x*a)*cosphi + b*sinphi) + normal.x*costheta,
+		sintheta * (sign*b*cosphi + (sign+normal.y*normal.y*a)*sinphi) + normal.y*costheta,
+		normal.z*costheta - sintheta * (sign*normal.x*cosphi + normal.y*sinphi),
+	};
+
+	return incoming - surface * 2.0 * incoming.dot(surface);
+}
+
+double scatter(vec &incoming, vec &outgoing, vec &normal, double shine){
+	vec surface = (outgoing-incoming).norm();
+	return std::pow(surface.dot(normal), shine) * (shine + 1.0);
+}
+
+void forward_trace(ray &r, int iter = 0){
 	touch t = hit(r);
 
 	if(t.hit){
@@ -76,42 +99,21 @@ void forward_trace(ray &r, int iter){
 
 		ray R; R.p = t.p; R.t = r.t;
 		R.d = (camera.p-t.p).norm();
-
-		vec sf = (R.d-r.d).norm();
-		R.c = r.c * std::pow(sf.dot(t.norm), t.mat.shine) * (t.mat.shine + 1.0);
-		add(R);
+		R.c = r.c * scatter(r.d, R.d, t.norm, t.mat.shine);
+		//if(R.c.mag() < 5.0 || !iter) add(R);
+		//if(R.c.mag() < 5.0 || !iter) add(R);
+		if(t.mat.shine < 50.1 || !iter) add(R);
+		//add(R);
 
 		r.p = t.p;
 
-		while(r.d.dot(t.norm) < 0.0){
-			double costheta = std::pow(rng::base(), 1.0 / (1.0 + t.mat.shine)),
-				   sintheta = std::sqrt(1.0 - costheta*costheta);
+		while(r.d.dot(t.norm) < 0.0) r.d = scatter(r.d, t.norm, t.mat.shine);
 
-			double sign = copysign(1.0, t.norm.z);
-			double a = -1.0 / (sign + t.norm.z);
-			double b = t.norm.x * t.norm.y * a;
-
-			double phi = rng::base() * M_PI * 2.0,
-				   cosphi = cos(phi), sinphi = sin(phi);
-
-			vec surface = {
-				sintheta * ((1.0 + sign*t.norm.x*t.norm.x*a)*cosphi + b*sinphi) + t.norm.x*costheta,
-				sintheta * (sign*b*cosphi + (sign+t.norm.y*t.norm.y*a)*sinphi) + t.norm.y*costheta,
-				t.norm.z*costheta - sintheta * (sign*t.norm.x*cosphi + t.norm.y*sinphi),
-			};
-
-			r.d = r.d - surface * 2.0 * r.d.dot(surface);
-
-			++tries;
-		}
-
-		++finish;
-
-		if(iter > 0) forward_trace(r, iter-1);
+		if(iter < camera.bounces) forward_trace(r, iter+1);
 	}
 }
 
-bool backward_trace(ray &r, int iter){
+bool backward_trace(ray &r, int iter = 0){
 	touch t = hit(r);
 
 	if(t.hit){
@@ -119,31 +121,9 @@ bool backward_trace(ray &r, int iter){
 
 		r.p = t.p;
 
-		while(r.d.dot(t.norm) < 0.0){
-			double costheta = std::pow(rng::base(), 1.0 / (1.0 + t.mat.shine)),
-				   sintheta = std::sqrt(1.0 - costheta*costheta);
+		while(r.d.dot(t.norm) < 0.0) r.d = scatter(r.d, t.norm, t.mat.shine);
 
-			double sign = copysign(1.0, t.norm.z);
-			double a = -1.0 / (sign + t.norm.z);
-			double b = t.norm.x * t.norm.y * a;
-
-			double phi = rng::base() * M_PI * 2.0,
-				   cosphi = cos(phi), sinphi = sin(phi);
-
-			vec surface = {
-				sintheta * ((1.0 + sign*t.norm.x*t.norm.x*a)*cosphi + b*sinphi) + t.norm.x*costheta,
-				sintheta * (sign*b*cosphi + (sign+t.norm.y*t.norm.y*a)*sinphi) + t.norm.y*costheta,
-				t.norm.z*costheta - sintheta * (sign*t.norm.x*cosphi + t.norm.y*sinphi),
-			};
-
-			r.d = r.d - surface * 2.0 * r.d.dot(surface);
-
-			++tries;
-		}
-
-		++finish;
-
-		if(iter > 0) return backward_trace(r, iter-1);
+		if(iter < camera.bounces) return backward_trace(r, iter+1);
 
 		return false;
 
