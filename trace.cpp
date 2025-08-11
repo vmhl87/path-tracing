@@ -91,25 +91,50 @@ double scatter(vec &incoming, vec &outgoing, vec &normal, double shine){
 	return std::pow(surface.dot(normal), shine) * (shine + 1.0);
 }
 
-void forward_trace(ray &r, int iter = 0){
+double scatter2(vec &incoming, vec &outgoing, vec &normal, double shine){
+	vec surface = (outgoing-incoming).norm();
+	double costheta = surface.dot(normal),
+		   theta = std::acos(costheta);
+	/*
+	double r = shine*4.0*theta/M_PI;
+	r = std::max(0.0, 1.0 - r*r);
+	double M = M_PI / 4.0 / shine;
+	double avg = 1.0 + (1.0-cos(M))*32.0*shine*shine/M_PI/M_PI - sin(M)*8.0*shine/M_PI;
+	return r / avg;
+	*/
+	if(theta > M_PI/4.0/shine) return 0;
+	return (0.5 + cos(4.0*shine*theta)/2.0) / 0.089543;
+}
+
+void forward_trace(ray &r, double dist = 0.0, int iter = 0){
 	touch t = hit(r);
 
 	if(t.hit){
 		r.c *= t.mat.c;
+		//dist += r.p.dist(t.p);
+		if(iter) dist += r.p.dist(t.p);
+		r.p = t.p;
 
 		ray R; R.p = t.p; R.t = r.t;
 		R.d = (camera.p-t.p).norm();
 		R.c = r.c * scatter(r.d, R.d, t.norm, t.mat.shine);
+
+		double dist2 = dist+camera.p.dist(t.p);
+
+		R.c *= 1.0 / dist2 / dist2 * -t.norm.dot(r.d) * t.norm.dot(R.d);
+
 		//if(R.c.mag() < 5.0 || !iter) add(R);
 		//if(R.c.mag() < 5.0 || !iter) add(R);
 		if(t.mat.shine < 50.1 || !iter) add(R);
 		//add(R);
-
-		r.p = t.p;
+		
+		r.c *= -t.norm.dot(r.d);
 
 		while(r.d.dot(t.norm) < 0.0) r.d = scatter(r.d, t.norm, t.mat.shine);
 
-		if(iter < camera.bounces) forward_trace(r, iter+1);
+		r.c *= t.norm.dot(r.d);
+
+		if(iter < camera.bounces) forward_trace(r, dist, iter+1);
 	}
 }
 

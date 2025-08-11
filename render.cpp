@@ -283,12 +283,32 @@ int main(){
 					// normalize by probability distribution
 					//d = (camera.p.distsq(t1.p)) / (t1.p.distsq(t2.p) + t2.p.distsq(l.p.p)) / M_PI / 4.0;
 					//d /= 64.0;
-					//d = 1.0;
 					//d = (camera.p.distsq(t1.p) + t1.p.distsq(t2.p)) / (t2.p.distsq(l.p.p)) / M_PI / 4.0;
 					//d = 1.0 / (t2.p.distsq(l.p.p)) / M_PI / 4.0;
 					//d = 1.0 / (t2.p.distsq(l.p.p));
 					//d = 8.0 * t2.norm.dot(r4.d) / (t2.p.distsq(l.p.p));
-					d = 1.0 / (t2.p.distsq(l.p.p));
+
+					//d = 1.0 / (t2.p.distsq(l.p.p)) / -r3.d.dot(t2.norm) * r4.d.dot(t2.norm);
+
+					//d = (camera.p.distsq(t1.p) + t1.p.distsq(t2.p))
+					//d = camera.p.distsq(t1.p)
+					//d = 0.32
+					d = camera.w * camera.h / camera.c / camera.c
+						/// std::pow(camera.p.dist(t1.p) + t1.p.dist(t2.p) + t2.p.dist(l.p.p), 2)
+						/ std::pow(t2.p.dist(l.p.p), 2)
+						/ std::pow(camera.p.dist(t1.p) + t1.p.dist(t2.p), 2)
+						/// std::pow(t1.p.dist(t2.p) + t2.p.dist(l.p.p) + camera.p.dist(t1.p), 2)
+						// std::pow(t1.p.dist(t2.p) + t2.p.dist(l.p.p), 2)
+						// std::pow(camera.p.dist(t1.p), 2)
+						/// t2.p.distsq(l.p.p)
+						* -r2.d.dot(t1.norm) * r3.d.dot(t1.norm)
+						/// -r3.d.dot(t2.norm) * r4.d.dot(t2.norm);
+						* -r3.d.dot(t2.norm) * r4.d.dot(t2.norm) * M_PI * 2.0;
+						//* r4.d.dot(t2.norm);
+						/// M_PI / 4.0;
+					//d = 1.0 / -r3.d.dot(t2.norm) * r4.d.dot(t2.norm) / 2.0 / M_PI;
+					//d = 1.0;
+					//energy = t1.mat.c * t2.mat.c * l.c * scatter2(r3.d, r4.d, t2.norm, t2.mat.shine) * d;
 					energy = t1.mat.c * t2.mat.c * l.c * scatter(r3.d, r4.d, t2.norm, t2.mat.shine) * d;
 					//energy = t1.mat.c * t2.mat.c * l.c * d;
 
