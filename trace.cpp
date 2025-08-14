@@ -127,7 +127,6 @@ void forward_trace(ray &r, double dist = 0.0, int iter = 0){
 
 		if(EXPERIMENTAL_RENDER){
 			//if(R.c.mag() < 5.0 || !iter) add(R);
-			//if(R.c.mag() < 5.0 || !iter) add(R);
 			if(t.mat.shine < 50.1 || !iter) add(R);
 
 		}else add(R);
