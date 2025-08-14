@@ -4,6 +4,8 @@
 
 #include "util.cpp"
 
+bool EXPERIMENTAL_RENDER = false;
+
 struct touch{
 	material mat;
 	vec norm, p;
@@ -123,10 +125,12 @@ void forward_trace(ray &r, double dist = 0.0, int iter = 0){
 
 		R.c *= 1.0 / dist2 / dist2 * -t.norm.dot(r.d) * t.norm.dot(R.d);
 
-		//if(R.c.mag() < 5.0 || !iter) add(R);
-		//if(R.c.mag() < 5.0 || !iter) add(R);
-		if(t.mat.shine < 50.1 || !iter) add(R);
-		//add(R);
+		if(EXPERIMENTAL_RENDER){
+			//if(R.c.mag() < 5.0 || !iter) add(R);
+			//if(R.c.mag() < 5.0 || !iter) add(R);
+			if(t.mat.shine < 50.1 || !iter) add(R);
+
+		}else add(R);
 		
 		r.c *= -t.norm.dot(r.d);
 

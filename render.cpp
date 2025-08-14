@@ -217,32 +217,8 @@ int main(){
 					add(R);
 				}
 
-				//forward_trace(r, camera.bounces);
-
-				/*
-				{
-					int x_coord = std::floor(rng::base()*camera.w),
-						y_coord = std::floor(rng::base()*camera.h);
-
-					ray r2;
-
-					r2.c = global, r2.p = camera.p; r2.t = r.t;
-					r2.d = camera.d.project({
-						x_coord-camera.w/2 + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
-						camera.h/2-y_coord + rng::base() + (camera.use_blur ? rng::norm()*camera.blur : 0),
-						camera.c,
-					}).norm();
-
-					touch t = hit(r2);
-
-					if(t.hit){
-						forward_trace(r, t.p, r2.d, t.norm, t.mat.c, t.mat.shine, x_coord, y_coord, camera.bounces);
-
-					}else forward_trace(r, camera.bounces);
-				};
-				*/
-
-				{
+				if(!EXPERIMENTAL_RENDER) forward_trace(r);
+				else{
 					int x_coord = std::floor(rng::base()*camera.w),
 						y_coord = std::floor(rng::base()*camera.h);
 
