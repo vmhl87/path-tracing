@@ -1,7 +1,3 @@
-.postprocess-cmd
-postprocess
-.image.raw
 image.bmp
-image.raw
 image.png
 run
