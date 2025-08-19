@@ -28,6 +28,14 @@ int main(){
 				for(int j=0; j<camera.bounces; ++j){
 					if(hit(r, t)){
 						r.c *= t.m -> c;
+
+						// if(!j && t.m -> smooth < 300) break;
+
+						if(t.m -> light){
+							camera.set(x, y, r.c);
+							break;
+						}
+
 						t.scatter(r);
 
 					}else{
@@ -68,11 +76,13 @@ int main(){
 						r.c *= t.m -> c;
 						d += r.p.dist(t.p);
 
+						// if(t.m -> smooth < 300){
 						{
 							ray R; touch T;
 							R.p = t.p; R.d = (camera.p-t.p).norm();
 							if(!hit(R, T) || T.d > camera.p.dist(R.p)){
-								double E = camera.p.dist(R.p)+d;
+								//double E = camera.p.dist(R.p)+d;
+								double E = camera.p.dist(R.p);
 								E = factor*t.scatter(r.d, R.d)/E/E;
 								camera.set(R.p, r.c*E);
 								++x;

@@ -6,6 +6,7 @@ struct ray{
 };
 
 struct material{
+	bool light = false;
 	color c;
 	double smooth = 1.0;
 };
