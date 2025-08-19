@@ -32,6 +32,7 @@ int main(){
 
 	if(fancy){
 		camera.spp = 256;
+		camera.spp = 1024;
 		camera.report = 0;
 		camera.bounces = 10;
 	}
