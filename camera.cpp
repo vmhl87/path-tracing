@@ -15,13 +15,17 @@ struct _camera{
 
 	int bounces = 5;
 
-	color *data = nullptr;
+	int threads = 1;
+	color *data[MAX_THREADS] = {};
 	unsigned char *image = nullptr;
 
 	void init(){
 		t.init();
-		data = new color[w*h];
 		image = new unsigned char[w*h*3];
+	}
+
+	void init(int id){
+		data[id] = new color[w*h];
 	}
 
 	void get(double X, double Y, ray &r){
@@ -36,11 +40,11 @@ struct _camera{
 		r.p = p;
 	}
 
-	void set(int x, int y, color &c){
-		data[x+y*w] += c;
+	void set(int id, int x, int y, color &c){
+		data[id][x+y*w] += c;
 	}
 
-	void set(vec &ray, color col){
+	void set(int id, vec &ray, color col){
 		vec coord = t.revert(ray-p);
 		if(coord.z <= 0.0) return;
 		coord /= coord.z;
@@ -49,11 +53,15 @@ struct _camera{
 			y = h/2 - std::floor(coord.y) - 1;
 
 		if(x >= 0 && x < w && y >= 0 && y < h)
-			data[x+y*w] += col;
+			data[id][x+y*w] += col;
 	}
 
 	void write(double progress = 1.0){
-		double exp2 = spp * progress / exposure;
+		double exp2 = threads * spp * progress / exposure;
+
+		for(int i=1; i<threads; ++i)
+			for(int j=0; j<w*h; ++j)
+				data[0][j] += data[i][j];
 
 		auto bake = [&] (double v){
 			return 255.0 * pow(v/exp2, 1.0/gamma);
@@ -65,9 +73,9 @@ struct _camera{
 		};
 
 		for(int i=0; i<w*h; ++i){
-			image[i*3+2] = c(data[i].x);
-			image[i*3+1] = c(data[i].y);
-			image[i*3] = c(data[i].z);
+			image[i*3+2] = c(data[0][i].x);
+			image[i*3+1] = c(data[0][i].y);
+			image[i*3] = c(data[0][i].z);
 		}
 
 		writeBMP("image.bmp", image, w, h);

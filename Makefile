@@ -7,11 +7,12 @@ debug:
 run: *.cpp
 	g++ main.cpp -o ./run -O2 -lm -march=native -Wall -Wextra
 
+threads = 1
 test: run
-	bash -c "time ./run"
+	./run $(threads)
 	convert image.bmp image.png
 
 perf:
 	g++ main.cpp -o ./run -pg -g -lm -Wall -Wextra -O2 -march=native
-	bash -c "time ./run"
+	./run
 	gprof run

@@ -1,4 +1,9 @@
 #include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
+
+#define MAX_THREADS 12
 
 #include "vec.cpp"
 #include "rng.cpp"
@@ -10,14 +15,53 @@
 
 #include "scene.cpp"
 
-int main(){
+void render(int id);
+
+int main(int argc, char *argv[]){
 	rng::init();
 
 	setup_scene();
 
 	camera.init();
-	
 	for(rect &s : rects) s.t.init();
+
+	if(argc > 1){
+		try{
+			int threads = std::stoi(argv[1]);
+			if(threads > 1 && threads <= MAX_THREADS)
+				camera.threads = threads;
+
+		}catch(const std::invalid_argument &e){
+			std::cerr << "invalid arg " << e.what() << '\n';
+		}catch(const std::out_of_range &e){
+			std::cerr << "out of range " << e.what() << '\n';
+		}
+	}
+
+	std::cout << "tracing with " << camera.threads << " threads\n";
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+	if(camera.threads == 1) render(0);
+	else{
+		std::thread threads[MAX_THREADS];
+
+		for(int i=0; i<camera.threads; ++i)
+			threads[i] = std::thread(render, i);
+
+		for(int i=0; i<camera.threads; ++i)
+			threads[i].join();
+	}
+
+	auto now = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> duration = now - start;
+	std::cout << "render " << std::floor(duration.count()*1e3)/1e3 << "s\n";
+
+	camera.write();
+}
+
+void render(int id){
+	camera.init(id);
 
 	for(int i=0; i<camera.spp; ++i){
 		for(int x=0; x<camera.w; ++x)
@@ -29,10 +73,8 @@ int main(){
 					if(hit(r, t)){
 						r.c *= t.m -> c;
 
-						// if(!j && t.m -> smooth < 300) break;
-
 						if(t.m -> light){
-							camera.set(x, y, r.c);
+							camera.set(id, x, y, r.c);
 							break;
 						}
 
@@ -40,7 +82,7 @@ int main(){
 
 					}else{
 						r.c *= sky(r.d) * (1.0 + 0.5*(rng::base()*2.0-1.0));
-						camera.set(x, y, r.c);
+						camera.set(id, x, y, r.c);
 						break;
 					}
 				}
@@ -67,7 +109,7 @@ int main(){
 					if(!hit(R, T) || T.d > camera.p.dist(R.p)){
 						double E = camera.p.dist(R.p);
 						E = factor/2.0/E/E;
-						camera.set(R.p, l.c(R.d)*E);
+						camera.set(id, R.p, l.c(R.d)*E);
 					}
 				};
 
@@ -76,7 +118,6 @@ int main(){
 						r.c *= t.m -> c;
 						d += r.p.dist(t.p);
 
-						// if(t.m -> smooth < 300){
 						{
 							ray R; touch T;
 							R.p = t.p; R.d = (camera.p-t.p).norm();
@@ -84,7 +125,7 @@ int main(){
 								//double E = camera.p.dist(R.p)+d;
 								double E = camera.p.dist(R.p);
 								E = factor*t.scatter(r.d, R.d)/E/E;
-								camera.set(R.p, r.c*E);
+								camera.set(id, R.p, r.c*E);
 								++x;
 							}
 						};
@@ -96,9 +137,7 @@ int main(){
 			}
 		}
 
-		if(camera.report && i%camera.report == 0)
+		if(camera.threads == 1 && camera.report && i%camera.report == 0)
 			camera.write((double) i / (double) camera.spp);
 	}
-
-	camera.write();
 }

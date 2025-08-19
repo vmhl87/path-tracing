@@ -1,7 +1,5 @@
 #pragma once
 
-bool fancy = 0;
-
 color sky(vec &d){
 	return (vec){1,1,1} * (d.dot((vec){0,1,0})*0.5+0.5);
 }
@@ -19,12 +17,8 @@ void setup_scene(){
 	camera.report = 2;
 	camera.bounces = 5;
 
-	if(fancy){
-		camera.spp = 256;
-		camera.spp = 1024;
-		camera.report = 0;
-		camera.bounces = 10;
-	}
+	camera.spp = 128;
+	camera.bounces = 10;
 
 	double L = 0.25;
 	L = 0.75;
@@ -64,6 +58,7 @@ void setup_scene(){
 		},
 		.m = {
 			.c = {0, 0.75, 0},
+			.smooth = 10,
 		},
 		.w = 1, .l = L,
 	});
@@ -77,7 +72,8 @@ void setup_scene(){
 		},
 		.m = {
 			.c = {0.2, 0.2, 0.75},
-			.smooth = 300,
+			//.smooth = 300,
+			.smooth = 1000,
 		},
 		.w = 1, .l = L,
 	});
@@ -91,7 +87,7 @@ void setup_scene(){
 		},
 		.m = {
 			.c = {0.75, 0, 0},
-			.smooth = 10,
+			//.smooth = 10,
 		},
 		.w = 1, .l = L,
 	});
