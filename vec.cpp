@@ -1,10 +1,6 @@
 #pragma once
 
-#include <sstream>
-#include <string>
 #include <cmath>
-
-#include "headers.hpp"
 
 struct vec{
 	double x, y, z;
@@ -77,14 +73,62 @@ struct vec{
 	double dist(const vec o) const{
 		return (*this-o).mag();
 	}
+};
 
-	std::string out() const{
-		auto v = [] (double x) {
-			return std::round(x * 1000.0) / 1000.0;
+using color = vec;
+
+struct transform{
+	vec p = {0, 0, 0},
+		x = {1, 0, 0},
+		y = {0, 1, 0},
+		z = {0, 0, 1};
+
+	transform *t = nullptr;
+
+	void init(){
+		z = z.norm();
+		x = y.cross(z).norm();
+		y = z.cross(x).norm();
+	}
+
+	vec apply(const vec &v) const{
+		vec res = {
+			p.x + z.x*v.z + y.x*v.y + x.x*v.x,
+			p.y + z.y*v.z + y.y*v.y + x.y*v.x,
+			p.z + z.z*v.z + y.z*v.y + x.z*v.x,
 		};
 
-		std::stringstream c;
-		c << '{' << v(x) << ' ' << v(y) << ' ' << v(z) << '}';
-		return c.str();
+		if(t != nullptr) return t->apply(res);
+		return res;
+	}
+
+	vec revert(const vec &V) const{
+		vec v = (t == nullptr ? V : t->revert(V)) - p;
+
+		return {
+			v.x*x.x + v.y*x.y + v.z*x.z,
+			v.x*y.x + v.y*y.y + v.z*y.z,
+			v.x*z.x + v.y*z.y + v.z*z.z,
+		};
+	}
+
+	vec apply_d(const vec &v) const{
+		vec res = {
+			z.x*v.z + y.x*v.y + x.x*v.x,
+			z.y*v.z + y.y*v.y + x.y*v.x,
+			z.z*v.z + y.z*v.y + x.z*v.x,
+		};
+
+		return t == nullptr ? res : t->apply_d(res);
+	}
+
+	vec revert_d(const vec &V) const{
+		vec v = t == nullptr ? V : t->revert_d(V);
+
+		return {
+			v.x*x.x + v.y*x.y + v.z*x.z,
+			v.x*y.x + v.y*y.y + v.z*y.z,
+			v.x*z.x + v.y*z.y + v.z*z.z,
+		};
 	}
 };

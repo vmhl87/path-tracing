@@ -11,7 +11,7 @@ namespace rng{
 	std::normal_distribution<double> gaussian_gen(0.0, 1.0);
 
 	void init(){
-		srand(time(NULL));
+		//srand(time(NULL));
 	}
 
 	inline double base(){
@@ -24,7 +24,7 @@ namespace rng{
 		return gaussian_gen(gen);
 	}
 
-	vec uniform_norm(){
+	vec uniform(){
 		double u = base() * 2.0 - 1.0;
 		double phi = base() * 2.0 * M_PI;
 		double sqrt_1_minus_u2 = sqrt(1.0 - u * u);
@@ -36,11 +36,13 @@ namespace rng{
 		};
 	}
 
+	/*
 	vec uniform(){
 		return uniform_norm() * pow(base(), 1.0/3.0);
 	}
+	*/
 
 	vec gaussian(){
-		return uniform_norm() * norm();
+		return uniform() * norm();
 	}
 }

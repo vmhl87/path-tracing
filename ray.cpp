@@ -1,18 +1,13 @@
 #pragma once
 
-#include <vector>
-
 struct ray{
 	vec p, d;
 	color c;
 };
 
 struct material{
-	bool light = 0;
 	color c;
-
-	double specular = 0.0;
-	double gloss = 0.0;
+	double smooth = 1.0;
 };
 
 struct touch{
@@ -23,122 +18,30 @@ struct touch{
 	void scatter(ray &in){
 		in.p = p + n*1e-6;
 
-		if(rng::base() < m->specular){
-			vec out = in.d - n*2.0*in.d.dot(n);
-			if(m->gloss < 1e-6) in.d = out;
-			else{
-				in.d = (out + rng::uniform_norm()*m->gloss).norm();
-				if(in.d.dot(n) < 0.0)
-					in.d = in.d - n*2.0*in.d.dot(n);
-			}
+		double costheta = std::pow(rng::base(), 1.0 / (1.0 + m->smooth)),
+			   sintheta = std::sqrt(1.0 - costheta*costheta);
 
-		}else{
-			// lambert (cosine) distribution
-			in.d = (rng::uniform_norm() + n).norm();
-		}
+		double sign = copysign(1.0, n.z);
+		double a = -1.0 / (sign + n.z);
+		double b = n.x * n.y * a;
+
+		double phi = rng::base() * M_PI * 2.0,
+			   cosphi = cos(phi), sinphi = sin(phi);
+
+		vec surface = {
+			sintheta * ((1.0 + sign*n.x*n.x*a)*cosphi + b*sinphi) + n.x*costheta,
+			sintheta * (sign*b*cosphi + (sign+n.y*n.y*a)*sinphi) + n.y*costheta,
+			n.z*costheta - sintheta * (sign*n.x*cosphi + n.y*sinphi),
+		};
+
+		in.d = in.d - surface*2.0*in.d.dot(surface);
+
+		if(in.d.dot(n) < 0.0) in.d = in.d - n*2.0*in.d.dot(n);
+	}
+
+	double scatter(vec &in, vec &out){
+		vec s1 = (out-in).norm(), s2 = (out-n*2.0*out.dot(n)-in).norm();
+		return std::pow(s1.dot(n), m->smooth) * (m->smooth + 1.0) +
+			std::pow(s2.dot(n), m->smooth) * (m->smooth + 1.0);
 	}
 };
-
-struct sphere{
-	transform t;
-	material m;
-	double r;
-
-	bool hit(ray &o, touch &res) const{
-		bool x = _hit(t.revert(o.p), t.revert_d(o.d), res);
-
-		if(x) res.n = t.apply_d(res.n),
-			res.p = t.apply(res.p);
-
-		return x;
-	}
-
-	bool _hit(vec lp, vec ld, touch &res) const{
-		double b = 2.0*lp.dot(ld),
-			   c = lp.dot(lp)-r*r,
-			   D = b*b - 4*c;
-
-		if(D<0) return false;
-		else{
-			double t1 = (-b-std::sqrt(D)) / 2.0,
-				   t2 = (-b+std::sqrt(D)) / 2.0;
-
-			if(t1 > 0.001) res.d = t1;
-			else if(t2 > 0.001) res.d = t2;
-			else return false;
-
-			res.n = (res.p = lp+ld*res.d).norm(),
-			res.m = &m;
-
-			return true;
-		}
-	}
-};
-
-std::vector<sphere> spheres;
-
-struct rect{
-	transform t;
-	material m;
-	double w, l;
-	bool bias = false;
-
-	bool hit(ray &o, touch &res) const{
-		bool x = _hit(t.revert(o.p), t.revert_d(o.d), res);
-
-		if(x) res.n = t.apply_d(res.n),
-			res.p = t.apply(res.p);
-
-		return x;
-	}
-
-	bool _hit(vec lp, vec ld, touch &res) const{
-		if(ld.y == 0.0) return false;
-		if(lp.y < 0.0 && bias) return false;
-		if(copysign(1.0, ld.y) == copysign(1.0, lp.y)) return false;
-		res.d = -ld.mag()/ld.y * lp.y;
-
-		vec p = lp + ld*res.d;
-		if(std::abs(p.x) > w || std::abs(p.z) > l) return false;
-
-		double eps = 1e-8;
-		res.n = {0, copysign(1.0, lp.y), 0};
-		res.p = p + res.n*eps;
-		res.m = &m;
-
-		return true;
-	}
-};
-
-std::vector<rect> rects;
-
-struct _obj{
-	transform t;
-	material m;
-
-	bool hit(ray &o, touch &res) const{
-		bool x = _hit(t.revert(o.p), t.revert_d(o.d), res);
-
-		if(x) res.n = t.apply_d(res.n),
-			res.p = t.apply(res.p);
-
-		return x;
-	}
-
-	bool _hit(vec lp, vec ld, touch &res) const;
-};
-
-bool hit(ray &r, touch &t){
-	touch alt; t.d = 1e18;
-	bool res = 0;
-
-	for(const sphere &s : spheres)
-		if(s.hit(r, alt) && alt.d < t.d)
-			t = alt, res |= 1;
-
-	for(const rect &s : rects)
-		if(s.hit(r, alt) && alt.d < t.d)
-			t = alt, res |= 1;
-
-	return res;
-}

@@ -38,6 +38,18 @@ struct _camera{
 		data[x+y*w] += c;
 	}
 
+	void set(vec &ray, color col){
+		vec coord = t.revert(ray-p);
+		if(coord.z <= 0.0) return;
+		coord /= coord.z;
+		coord *= c;
+		int x = w/2 + std::floor(coord.x),
+			y = h/2 - std::floor(coord.y) - 1;
+
+		if(x >= 0 && x < w && y >= 0 && y < h)
+			data[x+y*w] += col;
+	}
+
 	void write(double progress = 1.0){
 		double exp2 = spp * progress / exposure;
 
