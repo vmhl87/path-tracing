@@ -10,14 +10,8 @@ void setup_camera(){
 	camera.t.y = { -0.1, 1, 0 };
 
 	camera.spp = 16;
-	camera.report = 2;
+	camera.sync = 2;
 	camera.bounces = 5;
-
-	camera.spp = 32;
-	camera.report = 6;
-
-	//camera.spp = 128;
-	//camera.bounces = 10;
 }
 
 color sky(vec &d){

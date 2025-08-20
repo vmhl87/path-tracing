@@ -57,6 +57,9 @@ int main(int argc, char *argv[]){
 	target.write();
 }
 
+void backward_trace(buffer &buf, int x, int y);
+void forward_trace(buffer &buf, light &l, int samples, double factor);
+
 void render(int id){
 	buffer &buf = id ? _buffers[id-1] : target.data;
 	if(id) _buffers[id-1].init();
@@ -72,78 +75,85 @@ void render(int id){
 	while(samples < camera.w*camera.h/2)
 		factor /= 2.0, samples *= 2;
 
-	for(int i=0; i<camera.spp; ++i){
-		for(int x=0; x<camera.w; ++x)
-			for(int y=0; y<camera.h; ++y){
-				ray r; touch t;
+	if(camera.threads == 1 && camera.sync){
+		for(int i=0; i<camera.spp; ++i){
+			for(int x=0; x<camera.w; ++x)
+				for(int y=0; y<camera.h; ++y)
+					backward_trace(buf, x, y);
 
-				camera.get(x+rng::base(), y+rng::base(), r);
+			for(light &l : lights)
+				forward_trace(buf, l, samples, factor);
 
-				for(int j=0; j<camera.bounces; ++j){
-					if(hit(r, t, 1)){
-						r.c *= t.m -> c;
-
-						if(t.m -> light){
-							camera.set(buf, x, y, r.c);
-							break;
-						}
-
-						t.scatter(r);
-
-					}else{
-						r.c *= sky(r.d) * (1.0 + 0.5*(rng::base()*2.0-1.0));
-						camera.set(buf, x, y, r.c);
-						break;
-					}
-				}
-			}
-
-		for(light &l : lights){
-			for(int x=0; x<samples; ++x){
-				ray r; touch t; l.get(r);
-
-				double d = 0;
-
-				{
-					ray R; touch T;
-					R.p = r.p; R.d = (camera.p-r.p).norm();
-					if(!hit(R, T) || T.d > camera.p.dist(R.p)){
-						double E = camera.p.dist(R.p);
-						E = factor/2.0/E/E;
-						camera.set(buf, R.p, l.c(R.d)*E);
-					}
-				};
-
-				for(int j=0; j<camera.bounces; ++j){
-					if(hit(r, t)){
-						r.c *= t.m -> c;
-						d += r.p.dist(t.p);
-
-						{
-							ray R; touch T;
-							R.p = t.p; R.d = (camera.p-t.p).norm();
-							if(!hit(R, T) || T.d > camera.p.dist(R.p)){
-								//double E = camera.p.dist(R.p)+d;
-								double E = camera.p.dist(R.p);
-								E = factor*t.scatter(r.d, R.d)/E/E;
-								camera.set(buf, R.p, r.c*E);
-								++x;
-							}
-						};
-
-						t.scatter(r);
-
-					}else break;
-				}
-			}
+			if(i%camera.sync == 0)
+				target.write((double) i / (double) camera.spp);
 		}
+	}else{
+		for(int x=0; x<camera.w; ++x)
+			for(int y=0; y<camera.h; ++y)
+				for(int i=0; i<camera.spp; ++i)
+					backward_trace(buf, x, y);
 
-		if(camera.threads == 1 && camera.report && i%camera.report == 0)
-			target.write((double) i / (double) camera.spp);
+		for(light &l : lights)
+			for(int x=0; x<camera.spp; ++x)
+				forward_trace(buf, l, samples, factor);
 	}
 
 	auto now = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> duration = now - start;
 	std::cout << "thread " << id+1 << " finished in "
 		<< std::floor(duration.count()*1e3)/1e3 << "s\n";
+}
+
+void backward_trace(buffer &buf, int x, int y){
+	ray r; touch t;
+
+	camera.get(x+rng::base(), y+rng::base(), r);
+
+	for(int j=0; j<camera.bounces; ++j){
+		if(hit(r, t, 1)){
+			r.c *= t.m -> c;
+
+			if(t.m -> light){
+				camera.set(buf, x, y, r.c);
+				break;
+			}
+
+			t.scatter(r);
+
+		}else{
+			r.c *= sky(r.d) * (1.0 + 0.5*(rng::base()*2.0-1.0));
+			camera.set(buf, x, y, r.c);
+			break;
+		}
+	}
+}
+
+void forward_trace(buffer &buf, light &l, int samples, double factor){
+	for(int x=0; x<samples; ++x){
+		ray r; touch t; l.get(r);
+
+		ray R; touch T;
+		R.p = r.p; R.d = (camera.p-r.p).norm();
+		if(!hit(R, T) || T.d > camera.p.dist(R.p)){
+			double E = factor/2.0/camera.p.distsq(R.p);
+			camera.set(buf, R.p, l.c(R.d)*E);
+		}
+
+		for(int j=0; j<camera.bounces; ++j){
+			if(hit(r, t)){
+				r.c *= t.m -> c;
+
+				ray R; touch T;
+				R.p = t.p; R.d = (camera.p-t.p).norm();
+				if(!hit(R, T) || T.d > camera.p.dist(R.p)){
+					double E = factor*t.scatter(r.d, R.d)/camera.p.distsq(R.p);
+					camera.set(buf, R.p, r.c*E);
+					++x;
+				}
+
+				t.scatter(r);
+
+			}else break;
+		}
+	}
 }

@@ -18,7 +18,7 @@ struct _camera{
 	int w, h;
 	double c;
 
-	int spp = 1, report = 0;
+	int spp = 1, sync = 0;
 	double exposure = 1.0,
 		   gamma = 2.2;
 
