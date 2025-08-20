@@ -147,8 +147,10 @@ void forward_trace(buffer &buf, light &l, int samples, double factor){
 				R.p = t.p; R.d = (camera.p-t.p).norm();
 				if(!hit(R, T) || T.d > camera.p.dist(R.p)){
 					double E = factor*t.scatter(r.d, R.d)/camera.p.distsq(R.p);
-					camera.set(buf, R.p, r.c*E);
-					++x;
+					//camera.set(buf, R.p, r.c*E);
+					//++x;
+					if(j < camera.bounces-1 && rng::base() < 0.75) r.c /= 0.75;
+					else{ camera.set(buf, R.p, r.c*E); break; }
 				}
 
 				t.scatter(r);

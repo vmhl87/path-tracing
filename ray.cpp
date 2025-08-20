@@ -30,6 +30,7 @@ vec cosine_lobe(double m, vec n){
 }
 
 double cosine_dist(double m, vec n, vec v){
+	//return std::pow(std::max(0.0, v.dot(n)), m - 1.0) * m;
 	return std::pow(std::max(0.0, v.dot(n)), m) * (m + 1.0);
 }
 
