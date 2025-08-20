@@ -19,10 +19,11 @@ void render(int id);
 buffer _buffers[MAX_THREADS-1];
 
 int main(int argc, char *argv[]){
-	setup_scene();
-
-	target.init();
+	setup_camera();
 	camera.t.init();
+	target.init();
+
+	setup_scene();
 	for(rect &s : rects) s.t.init();
 
 	if(argc > 1){
@@ -79,7 +80,7 @@ void render(int id){
 				camera.get(x+rng::base(), y+rng::base(), r);
 
 				for(int j=0; j<camera.bounces; ++j){
-					if(hit(r, t)){
+					if(hit(r, t, 1)){
 						r.c *= t.m -> c;
 
 						if(t.m -> light){

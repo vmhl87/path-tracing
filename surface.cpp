@@ -78,15 +78,15 @@ struct _obj_template{
 	bool _hit(vec lp, vec ld, touch &res) const;
 };
 
-bool hit(ray &r, touch &t){
+bool hit(ray &r, touch &t, bool use_light = false){
 	touch alt; t.d = 1e18;
 	bool res = 0;
 
-	for(const sphere &s : spheres)
+	for(const sphere &s : spheres) if(use_light || !s.m.light)
 		if(s.hit(r, alt) && alt.d < t.d)
 			t = alt, res |= 1;
 
-	for(const rect &s : rects)
+	for(const rect &s : rects) if(use_light || !s.m.light)
 		if(s.hit(r, alt) && alt.d < t.d)
 			t = alt, res |= 1;
 

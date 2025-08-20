@@ -1,10 +1,6 @@
 #pragma once
 
-color sky(vec &d){
-	return (vec){1,1,1} * (d.dot((vec){0,1,0})*0.5+0.5);
-}
-
-void setup_scene(){
+void setup_camera(){
 	camera.w = 600;
 	camera.h = 600;
 	camera.c = 400;
@@ -22,9 +18,14 @@ void setup_scene(){
 
 	//camera.spp = 128;
 	//camera.bounces = 10;
+}
 
-	double L = 0.25;
-	L = 0.75;
+color sky(vec &d){
+	return (vec){1,1,1} * (d.dot((vec){0,1,0})*0.5+0.5);
+}
+
+void setup_scene(){
+	double L = 0.75;
 
 	// floor
 	rects.push_back({
@@ -120,6 +121,8 @@ void setup_scene(){
 		.r = 0.3,
 	});
 
+	// ceiling light - 2 styles
+
 	/*
 	rects.push_back({
 		.t = {
@@ -139,30 +142,4 @@ void setup_scene(){
 		0.99,
 		0.35 * (rng::base()*2.0-1.0),
 	}, {1,1,1});
-
-	/*
-	double m = 300;
-	vec d = {0, -1, 0};
-
-	lights.push_back({
-		.get = [m, d] (ray &r) {
-			r.p = {
-				0.7 * (rng::base()*2.0-1.0),
-				0.95,
-				0.35 * (rng::base()*2.0-1.0),
-			};
-
-			if(rng::base() < 0.25) r.d = rng::uniform();
-			else r.d = cosine_lobe(m, d);
-
-			r.c = {1,1,1};
-		},
-		.c = [m, d] (vec &v) {
-			return (color) {1,1,1} * (
-				0.25 +
-				0.75 * cosine_dist(m, d, v)
-			);
-		},
-	});
-	*/
 }

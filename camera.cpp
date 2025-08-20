@@ -26,7 +26,7 @@ struct _camera{
 
 	int threads = 1;
 
-	void get(double X, double Y, ray &r){
+	void get(double X, double Y, ray &r) const{
 		vec dir = {
 			(X-w/2)/c,
 			(h/2-Y)/c,
@@ -38,11 +38,11 @@ struct _camera{
 		r.p = p;
 	}
 
-	void set(buffer &b, int x, int y, color col){
+	void set(buffer &b, int x, int y, color col) const{
 		b.add(x, y, col);
 	}
 
-	void set(buffer &b, vec &ray, color col){
+	void set(buffer &b, vec &ray, color col) const{
 		vec coord = t.revert(ray-p);
 		if(coord.z <= 0.0) return;
 		coord /= coord.z;
