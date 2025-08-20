@@ -6,17 +6,11 @@
 
 namespace rng{
 	std::random_device rd;
-	std::default_random_engine gen(rd());
+	thread_local std::default_random_engine gen(rd());
 	std::uniform_real_distribution<double> uniform_gen(0.0, 1.0);
 	std::normal_distribution<double> gaussian_gen(0.0, 1.0);
 
-	void init(){
-		//srand(time(NULL));
-	}
-
 	inline double base(){
-		//return ((double)xorshf96()/(double)UINT_MAX);
-		//return ((double)rand()/(double)RAND_MAX);
 		return uniform_gen(gen);
 	}
 
@@ -35,12 +29,6 @@ namespace rng{
 			u
 		};
 	}
-
-	/*
-	vec uniform(){
-		return uniform_norm() * pow(base(), 1.0/3.0);
-	}
-	*/
 
 	vec gaussian(){
 		return uniform() * norm();

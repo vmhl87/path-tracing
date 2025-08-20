@@ -17,8 +17,11 @@ void setup_scene(){
 	camera.report = 2;
 	camera.bounces = 5;
 
-	camera.spp = 128;
-	camera.bounces = 10;
+	camera.spp = 32;
+	camera.report = 6;
+
+	//camera.spp = 128;
+	//camera.bounces = 10;
 
 	double L = 0.25;
 	L = 0.75;

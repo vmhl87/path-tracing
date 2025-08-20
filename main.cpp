@@ -16,13 +16,13 @@
 #include "scene.cpp"
 
 void render(int id);
+buffer _buffers[MAX_THREADS-1];
 
 int main(int argc, char *argv[]){
-	rng::init();
-
 	setup_scene();
 
-	camera.init();
+	target.init();
+	camera.t.init();
 	for(rect &s : rects) s.t.init();
 
 	if(argc > 1){
@@ -40,33 +40,42 @@ int main(int argc, char *argv[]){
 
 	std::cout << "tracing with " << camera.threads << " threads\n";
 
-	auto start = std::chrono::high_resolution_clock::now();
+	std::thread threads[MAX_THREADS-1];
 
-	if(camera.threads == 1) render(0);
-	else{
-		std::thread threads[MAX_THREADS];
+	for(int i=1; i<camera.threads; ++i)
+		threads[i] = std::thread(render, i);
 
-		for(int i=0; i<camera.threads; ++i)
-			threads[i] = std::thread(render, i);
+	render(0);
 
-		for(int i=0; i<camera.threads; ++i)
-			threads[i].join();
-	}
+	for(int i=1; i<camera.threads; ++i)
+		threads[i].join();
 
-	auto now = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> duration = now - start;
-	std::cout << "render " << std::floor(duration.count()*1e3)/1e3 << "s\n";
+	for(int i=1; i<camera.threads; ++i)
+		target.data += _buffers[i-1];
 
-	camera.write();
+	target.write();
 }
 
 void render(int id){
-	camera.init(id);
+	buffer &buf = id ? _buffers[id-1] : target.data;
+	if(id) _buffers[id-1].init();
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+	int samples = camera.c * camera.c;
+	double factor = 1.0;
+
+	while(samples > camera.w*camera.h*2)
+		factor *= 2.0, samples /= 2;
+
+	while(samples < camera.w*camera.h/2)
+		factor /= 2.0, samples *= 2;
 
 	for(int i=0; i<camera.spp; ++i){
 		for(int x=0; x<camera.w; ++x)
 			for(int y=0; y<camera.h; ++y){
 				ray r; touch t;
+
 				camera.get(x+rng::base(), y+rng::base(), r);
 
 				for(int j=0; j<camera.bounces; ++j){
@@ -74,7 +83,7 @@ void render(int id){
 						r.c *= t.m -> c;
 
 						if(t.m -> light){
-							camera.set(id, x, y, r.c);
+							camera.set(buf, x, y, r.c);
 							break;
 						}
 
@@ -82,20 +91,11 @@ void render(int id){
 
 					}else{
 						r.c *= sky(r.d) * (1.0 + 0.5*(rng::base()*2.0-1.0));
-						camera.set(id, x, y, r.c);
+						camera.set(buf, x, y, r.c);
 						break;
 					}
 				}
 			}
-
-		int samples = camera.c * camera.c;
-		double factor = 1.0;
-
-		while(samples > camera.w*camera.h*2)
-			factor *= 2.0, samples /= 2;
-
-		while(samples < camera.w*camera.h/2)
-			factor /= 2.0, samples *= 2;
 
 		for(light &l : lights){
 			for(int x=0; x<samples; ++x){
@@ -109,7 +109,7 @@ void render(int id){
 					if(!hit(R, T) || T.d > camera.p.dist(R.p)){
 						double E = camera.p.dist(R.p);
 						E = factor/2.0/E/E;
-						camera.set(id, R.p, l.c(R.d)*E);
+						camera.set(buf, R.p, l.c(R.d)*E);
 					}
 				};
 
@@ -125,7 +125,7 @@ void render(int id){
 								//double E = camera.p.dist(R.p)+d;
 								double E = camera.p.dist(R.p);
 								E = factor*t.scatter(r.d, R.d)/E/E;
-								camera.set(id, R.p, r.c*E);
+								camera.set(buf, R.p, r.c*E);
 								++x;
 							}
 						};
@@ -138,6 +138,11 @@ void render(int id){
 		}
 
 		if(camera.threads == 1 && camera.report && i%camera.report == 0)
-			camera.write((double) i / (double) camera.spp);
+			target.write((double) i / (double) camera.spp);
 	}
+
+	auto now = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> duration = now - start;
+	std::cout << "thread " << id+1 << " finished in "
+		<< std::floor(duration.count()*1e3)/1e3 << "s\n";
 }
