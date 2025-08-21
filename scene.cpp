@@ -13,10 +13,12 @@ void setup_camera(){
 	camera.spp = 16;
 	camera.sync = 2;
 	camera.bounces = 5;
+
+	camera.spp = 64;
 }
 
 color sky(vec d){
-	//return vec{-2, 0, 0};
+	//return vec{-2,0,0};
 	return vec{1,1,1} * (d.dot({0,1,0})*0.5+0.5);
 }
 
@@ -72,8 +74,8 @@ void setup_scene(){
 		},
 		.m = {
 			.c = {0.2, 0.2, 0.75},
-			//.smooth = 300,
-			.smooth = 1000,
+			//.smooth = 1000,
+			.smooth = 4000,
 		},
 		.w = 1, .l = L,
 	});
@@ -87,7 +89,6 @@ void setup_scene(){
 		},
 		.m = {
 			.c = {0.75, 0, 0},
-			//.smooth = 10,
 		},
 		.w = 1, .l = L,
 	});

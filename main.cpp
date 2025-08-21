@@ -125,14 +125,8 @@ void backward_trace(buffer &buf, int x, int y){
 }
 
 void forward_trace(buffer &buf, const light &l){
-	int samples = camera.c * camera.c;
-	double factor = 1.0;
-
-	while(samples > camera.w*camera.h*2)
-		factor *= 2.0, samples /= 2;
-
-	while(samples < camera.w*camera.h/2)
-		factor /= 2.0, samples *= 2;
+	int samples = camera.w * camera.h;
+	double factor = camera.c * camera.c / camera.w / camera.h;
 
 	for(int x=0; x<samples; ++x){
 		ray r; touch t; l.get(r);
