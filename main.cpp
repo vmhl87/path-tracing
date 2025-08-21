@@ -24,7 +24,8 @@ int main(int argc, char *argv[]){
 	target.init();
 
 	setup_scene();
-	for(rect &s : rects) s.t.init();
+	for(sphere &s : spheres) s.init();
+	for(rect &s : rects) s.init();
 
 	if(argc > 1){
 		try{
@@ -58,22 +59,13 @@ int main(int argc, char *argv[]){
 }
 
 void backward_trace(buffer &buf, int x, int y);
-void forward_trace(buffer &buf, light &l, int samples, double factor);
+void forward_trace(buffer &buf, const light &l);
 
 void render(int id){
 	buffer &buf = id ? _buffers[id-1] : target.data;
 	if(id) _buffers[id-1].init();
 
 	auto start = std::chrono::high_resolution_clock::now();
-
-	int samples = camera.c * camera.c;
-	double factor = 1.0;
-
-	while(samples > camera.w*camera.h*2)
-		factor *= 2.0, samples /= 2;
-
-	while(samples < camera.w*camera.h/2)
-		factor /= 2.0, samples *= 2;
 
 	if(camera.threads == 1 && camera.sync){
 		for(int i=0; i<camera.spp; ++i){
@@ -82,7 +74,7 @@ void render(int id){
 					backward_trace(buf, x, y);
 
 			for(light &l : lights)
-				forward_trace(buf, l, samples, factor);
+				forward_trace(buf, l);
 
 			if(i%camera.sync == 0)
 				target.write((double) i / (double) camera.spp);
@@ -95,7 +87,7 @@ void render(int id){
 
 		for(light &l : lights)
 			for(int x=0; x<camera.spp; ++x)
-				forward_trace(buf, l, samples, factor);
+				forward_trace(buf, l);
 	}
 
 	auto now = std::chrono::high_resolution_clock::now();
@@ -128,13 +120,22 @@ void backward_trace(buffer &buf, int x, int y){
 	}
 }
 
-void forward_trace(buffer &buf, light &l, int samples, double factor){
+void forward_trace(buffer &buf, const light &l){
+	int samples = camera.c * camera.c;
+	double factor = 1.0;
+
+	while(samples > camera.w*camera.h*2)
+		factor *= 2.0, samples /= 2;
+
+	while(samples < camera.w*camera.h/2)
+		factor /= 2.0, samples *= 2;
+
 	for(int x=0; x<samples; ++x){
 		ray r; touch t; l.get(r);
 
 		ray R; touch T;
 		R.p = r.p; R.d = (camera.p-r.p).norm();
-		if(!hit(R, T) || T.d > camera.p.dist(R.p)){
+		if(!hit(R, T) || T.d*T.d > camera.p.distsq(R.p)){
 			double E = factor/2.0/camera.p.distsq(R.p);
 			camera.set(buf, R.p, l.c(R.d)*E);
 		}
@@ -145,12 +146,10 @@ void forward_trace(buffer &buf, light &l, int samples, double factor){
 
 				ray R; touch T;
 				R.p = t.p; R.d = (camera.p-t.p).norm();
-				if(!hit(R, T) || T.d > camera.p.dist(R.p)){
+				if(!hit(R, T) || T.d*T.d > camera.p.distsq(R.p)){
 					double E = factor*t.scatter(r.d, R.d)/camera.p.distsq(R.p);
-					//camera.set(buf, R.p, r.c*E);
-					//++x;
-					if(j < camera.bounces-1 && rng::base() < 0.75) r.c /= 0.75;
-					else{ camera.set(buf, R.p, r.c*E); break; }
+					camera.set(buf, R.p, r.c*E);
+					++x;
 				}
 
 				t.scatter(r);

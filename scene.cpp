@@ -1,4 +1,5 @@
 #pragma once
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 void setup_camera(){
 	camera.w = 600;
@@ -15,13 +16,11 @@ void setup_camera(){
 }
 
 color sky(vec &d){
-	return {0,0,0};
-	return (vec){1,1,1} * (d.dot((vec){0,1,0})*0.5+0.5);
+	return vec{1,1,1} * (d.dot({0,1,0})*0.5+0.5);
 }
 
 void setup_scene(){
 	double L = 0.75;
-	L = 1;
 
 	// floor
 	rects.push_back({
@@ -110,7 +109,6 @@ void setup_scene(){
 			.p = {0.35, -0.75, 0.2},
 		},
 		.m = {
-			//.c = {.7, .7, .7},
 			.c = {.9, .9, .9},
 			.smooth = 25,
 		},
