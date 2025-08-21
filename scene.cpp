@@ -15,7 +15,8 @@ void setup_camera(){
 	camera.bounces = 5;
 }
 
-color sky(vec &d){
+color sky(vec d){
+	//return vec{-2, 0, 0};
 	return vec{1,1,1} * (d.dot({0,1,0})*0.5+0.5);
 }
 

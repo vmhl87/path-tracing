@@ -23,7 +23,7 @@ struct sphere{
 		//if(x) res.n = t.apply_d(res.n), res.p = t.apply(res.p);
 		//return x;
 		bool x = hit(o.p-final_pos, o.d, res);
-		if(x) res.n += final_pos;
+		if(x) res.p += final_pos;
 		return x;
 	}
 
@@ -93,6 +93,8 @@ struct rect{
 
 std::vector<rect> rects;
 
+#ifdef ignore
+
 struct _obj_template{
 	transform t;
 	material m;
@@ -108,17 +110,17 @@ struct _obj_template{
 	bool hit(vec lp, vec ld, touch &res) const;
 };
 
+#endif
+
 bool hit(ray &r, touch &t, bool use_light = false){
 	touch alt; t.d = 1e18;
 	bool res = 0;
 
 	for(const sphere &s : spheres) if(use_light || !s.m.light)
-		if(s.hit(r, alt) && alt.d < t.d)
-			t = alt, res |= 1;
+		if(s.hit(r, alt) && alt.d < t.d) t = alt, res |= 1;
 
 	for(const rect &s : rects) if(use_light || !s.m.light)
-		if(s.hit(r, alt) && alt.d < t.d)
-			t = alt, res |= 1;
+		if(s.hit(r, alt) && alt.d < t.d) t = alt, res |= 1;
 
 	return res;
 }

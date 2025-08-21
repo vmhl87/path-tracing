@@ -67,23 +67,27 @@ void render(int id){
 
 	auto start = std::chrono::high_resolution_clock::now();
 
+	bool use_global = sky({0, 0, 0}).x > -1;
+
 	if(camera.threads == 1 && camera.sync){
 		for(int i=0; i<camera.spp; ++i){
-			for(int x=0; x<camera.w; ++x)
-				for(int y=0; y<camera.h; ++y)
-					backward_trace(buf, x, y);
+			if(use_global)
+				for(int x=0; x<camera.w; ++x)
+					for(int y=0; y<camera.h; ++y)
+						backward_trace(buf, x, y);
 
 			for(light &l : lights)
 				forward_trace(buf, l);
 
 			if(i%camera.sync == 0)
-				target.write((double) i / (double) camera.spp);
+				target.write((double) (i+1) / (double) camera.spp);
 		}
 	}else{
-		for(int x=0; x<camera.w; ++x)
-			for(int y=0; y<camera.h; ++y)
-				for(int i=0; i<camera.spp; ++i)
-					backward_trace(buf, x, y);
+		if(use_global)
+			for(int x=0; x<camera.w; ++x)
+				for(int y=0; y<camera.h; ++y)
+					for(int i=0; i<camera.spp; ++i)
+						backward_trace(buf, x, y);
 
 		for(light &l : lights)
 			for(int x=0; x<camera.spp; ++x)
