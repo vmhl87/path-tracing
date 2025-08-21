@@ -33,4 +33,16 @@ namespace rng{
 	vec gaussian(){
 		return uniform() * norm();
 	}
+
+#ifdef ignore
+
+	inline double IGN(double x, double y, double Z){
+		double z = Z*5.588238f;
+		return std::fmod(
+			52.9829189f * std::fmod(0.06711056f*(x+z) + 0.00583715f*(y+z), 1.0),
+			1.0);
+	}
+
+#endif
+
 }
