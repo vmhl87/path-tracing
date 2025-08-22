@@ -102,12 +102,14 @@ void render(int id){
 
 void backward_trace(buffer &buf, int x, int y){
 	ray r; touch t;
+	bool smooth = 1;
 
 	camera.get(x+rng::base(), y+rng::base(), r);
 
 	for(int j=0; j<camera.bounces; ++j){
 		if(hit(r, t, 1)){
 			r.c *= t.m -> c;
+			if(t.m -> smooth < 200) smooth = 0;
 
 			if(t.m -> light){
 				camera.set(buf, x, y, r.c);
@@ -117,7 +119,7 @@ void backward_trace(buffer &buf, int x, int y){
 			t.scatter(r);
 
 		}else{
-			r.c *= sky(r.d) * (1.0 + 0.5*(rng::base()*2.0-1.0));
+			r.c *= sky(r.d) * (smooth ? 1 : 0.5 + rng::base());
 			camera.set(buf, x, y, r.c);
 			break;
 		}
