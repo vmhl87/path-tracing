@@ -116,10 +116,10 @@ bool hit(ray &r, touch &t, bool use_light = false){
 	touch alt; t.d = 1e18;
 	bool res = 0;
 
-	for(const sphere &s : spheres) if(use_light || !s.m.light)
+	for(const sphere &s : spheres) if(use_light || !(s.m.T & material::LIGHT))
 		if(s.hit(r, alt) && alt.d < t.d) t = alt, res |= 1;
 
-	for(const rect &s : rects) if(use_light || !s.m.light)
+	for(const rect &s : rects) if(use_light || !(s.m.T & material::LIGHT))
 		if(s.hit(r, alt) && alt.d < t.d) t = alt, res |= 1;
 
 	return res;

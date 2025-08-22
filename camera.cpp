@@ -85,7 +85,7 @@ struct _target{
 		double exp2 = camera.threads * camera.spp * progress / camera.exposure;
 
 		auto bake = [&] (double v){
-			return 255.0 * pow(v/exp2, 1.0/camera.gamma);
+			return 255.0 * pow(v, 1.0/camera.gamma);
 		};
 
 		auto c = [&] (double v) {
@@ -94,9 +94,9 @@ struct _target{
 		};
 
 		for(int i=0; i<camera.w*camera.h; ++i){
-			image[i*3+2] = c(data[i].x);
-			image[i*3+1] = c(data[i].y);
-			image[i*3] = c(data[i].z);
+			image[i*3+2] = c(data[i].x/exp2);
+			image[i*3+1] = c(data[i].y/exp2);
+			image[i*3] = c(data[i].z/exp2);
 		}
 
 		writeBMP("image.bmp", image, camera.w, camera.h);

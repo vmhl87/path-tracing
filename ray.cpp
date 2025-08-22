@@ -1,4 +1,5 @@
 #pragma once
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
 #include <initializer_list>
 
@@ -8,9 +9,44 @@ struct ray{
 };
 
 struct material{
-	bool light = false;
-	color c;
-	double smooth = 1.0;
+	static const short LIGHT = 1, DIFFUSE = 2, SPECULAR = 4;
+
+	short T;
+	color light_color, diffuse_color, specular_color;
+	double specular_fract;
+	double smooth;
+
+	static material diffuse(color c){
+		return {
+			.T = DIFFUSE,
+			.diffuse_color = c,
+		};
+	}
+
+	static material metal(color c, double smooth){
+		return {
+			.T = SPECULAR,
+			.specular_color = c,
+			.smooth = smooth,
+		};
+	}
+
+	static material dielectric(color c, double specular, double smooth){
+		return {
+			.T = DIFFUSE | SPECULAR,
+			.diffuse_color = c,
+			.specular_color = {1, 1, 1},
+			.specular_fract = specular,
+			.smooth = smooth,
+		};
+	}
+
+	static material light(color c){
+		return {
+			.T = LIGHT,
+			.light_color = c,
+		};
+	}
 };
 
 vec cosine_lobe(double m, vec n){
@@ -43,14 +79,48 @@ struct touch{
 	void scatter(ray &in){
 		in.p = p;
 
-		vec surface = cosine_lobe(m->smooth, n);
-		in.d = in.d - surface*2.0*in.d.dot(surface);
-		if(in.d.dot(n) < 0.0) in.d = in.d - n*2.0*in.d.dot(n);
+		bool s_diffuse = 0, s_specular = 0;
+
+		if((m->T & material::DIFFUSE) && (m->T & material::SPECULAR)){
+			double x = rng::base();
+			if(x > m->specular_fract) s_diffuse = 1;
+			else s_specular = 1;
+
+		}else if(m->T & material::DIFFUSE) s_diffuse = 1;
+		else if(m->T & material::SPECULAR) s_specular = 1;
+
+		if(s_diffuse){
+			in.c *= m->diffuse_color;
+			in.d = (rng::uniform()+n).norm();
+		}
+
+		if(s_specular){
+			in.c *= m->specular_color;
+			vec surface = cosine_lobe(m->smooth, n);
+			in.d = in.d - surface*2.0*in.d.dot(surface);
+			if(in.d.dot(n) < 0.0) in.d = in.d - n*2.0*in.d.dot(n);
+		}
 	}
 
-	double scatter(vec in, vec out){
-		vec s1 = (out-in).norm(), s2 = (out-n*2.0*out.dot(n)-in).norm();
-		return cosine_dist(m->smooth, n, s1) + cosine_dist(m->smooth, n, s2);
+	color scatter(vec in, vec out){
+		if((m->T & material::DIFFUSE) && (m->T & material::SPECULAR)){
+			vec s1 = (out-in).norm(), s2 = (out-n*2.0*out.dot(n)-in).norm();
+			double fract = cosine_dist(m->smooth, n, s1) + cosine_dist(m->smooth, n, s2);
+			return lerp(
+				m->diffuse_color*out.dot(n)*2.0*M_PI,
+				m->specular_color*fract * std::min(2.0, 0.5 / -in.dot(n)),
+				m->specular_fract);
+
+		}else if(m->T & material::DIFFUSE){
+			return m->diffuse_color*out.dot(n)*2.0*M_PI;
+
+		}else if(m->T & material::SPECULAR){
+			vec s1 = (out-in).norm(), s2 = (out-n*2.0*out.dot(n)-in).norm();
+			double fract = cosine_dist(m->smooth, n, s1) + cosine_dist(m->smooth, n, s2);
+			return m->specular_color*fract * std::min(3.0, 0.5 / -in.dot(n));
+		}
+
+		return m->light_color;
 	}
 };
 

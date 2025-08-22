@@ -58,14 +58,6 @@ struct vec{
 		};
 	}
 
-	vec lerp(const vec o, double v){
-		return {
-			o.x*v + x*(1.-v),
-			o.y*v + y*(1.-v),
-			o.z*v + z*(1.-v),
-		};
-	}
-
 	double distsq(const vec o) const{
 		return (*this-o).magsq();
 	}
@@ -74,6 +66,14 @@ struct vec{
 		return (*this-o).mag();
 	}
 };
+
+vec lerp(const vec a, const vec b, double v){
+	return {
+		b.x*v + a.x*(1.-v),
+		b.y*v + a.y*(1.-v),
+		b.z*v + a.z*(1.-v),
+	};
+}
 
 using color = vec;
 

@@ -95,23 +95,22 @@ void render(int id){
 	}
 
 	auto now = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> duration = now - start;
-	std::cout << "thread " << id+1 << " finished in "
-		<< std::floor(duration.count()*1e3)/1e3 << "s\n";
+	double duration = ((std::chrono::duration<double>) (now - start)).count();
+	std::cout << "thread " << id+1 << " finished in ";
+	if(duration > 60.0) std::cout << std::floor(duration / 60.0) << 'm';
+	std::cout << std::floor(std::fmod(duration, 60.0)*1e3)/1e3 << "s\n";
 }
 
 void backward_trace(buffer &buf, int x, int y){
 	ray r; touch t;
-	bool smooth = 1;
 
 	camera.get(x+rng::base(), y+rng::base(), r);
 
 	for(int j=0; j<camera.bounces; ++j){
 		if(hit(r, t, 1)){
-			r.c *= t.m -> c;
-			if(t.m -> smooth < 200) smooth = 0;
 
-			if(t.m -> light){
+			if(t.m->T & material::LIGHT){
+				r.c *= t.m->light_color;
 				camera.set(buf, x, y, r.c);
 				break;
 			}
@@ -119,7 +118,7 @@ void backward_trace(buffer &buf, int x, int y){
 			t.scatter(r);
 
 		}else{
-			r.c *= sky(r.d) * (smooth ? 1 : 0.5 + rng::base());
+			r.c *= sky(r.d) * (j ? 1 : 0.5 + rng::base());
 			camera.set(buf, x, y, r.c);
 			break;
 		}
@@ -142,12 +141,10 @@ void forward_trace(buffer &buf, const light &l){
 
 		for(int j=0; j<camera.bounces; ++j){
 			if(hit(r, t)){
-				r.c *= t.m -> c;
-
 				ray R; touch T;
 				R.p = t.p; R.d = (camera.p-t.p).norm();
 				if(!hit(R, T) || T.d*T.d > camera.p.distsq(R.p)){
-					double E = factor*t.scatter(r.d, R.d)/camera.p.distsq(R.p);
+					color E = t.scatter(r.d, R.d)*factor/camera.p.distsq(R.p);
 					camera.set(buf, R.p, r.c*E);
 					++x;
 				}

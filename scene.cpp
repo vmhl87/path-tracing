@@ -13,6 +13,11 @@ void setup_camera(){
 	camera.spp = 16;
 	camera.sync = 2;
 	camera.bounces = 5;
+
+	camera.spp = 64;
+	camera.sync = 8;
+
+	camera.spp = 256;
 }
 
 color sky(vec d){
@@ -30,9 +35,8 @@ void setup_scene(){
 			.y = {0, 1, 0},
 			.z = {0, 0, 1},
 		},
-		.m = {
-			.c = {1, 1, 1},
-		},
+		//.m = material::diffuse({1, 1, 1}),
+		.m = material::metal({1, 1, 1}, 0),
 		.w = 1, .l = 1,
 	});
 
@@ -43,9 +47,7 @@ void setup_scene(){
 			.y = {0, -1, 0},
 			.z = {0, 0, 1},
 		},
-		.m = {
-			.c = {1, 1, 1},
-		},
+		.m = material::diffuse({1, 1, 1}),
 		.w = 1, .l = 1,
 	});
 
@@ -56,10 +58,7 @@ void setup_scene(){
 			.y = {1, 0, 0},
 			.z = {0, 1, 0},
 		},
-		.m = {
-			.c = {0, 0.75, 0},
-			.smooth = 10,
-		},
+		.m = material::dielectric({0.1, 0.75, 0.1}, 0.1, 300),
 		.w = 1, .l = L,
 	});
 
@@ -70,10 +69,7 @@ void setup_scene(){
 			.y = {0, 0, -1},
 			.z = {0, 1, 0},
 		},
-		.m = {
-			.c = {0.2, 0.2, 0.75},
-			.smooth = 500,
-		},
+		.m = material::metal({0.2, 0.2, 0.75}, 500),
 		.w = 1, .l = L,
 	});
 
@@ -84,33 +80,25 @@ void setup_scene(){
 			.y = {-1, 0, 0},
 			.z = {0, 1, 0},
 		},
-		.m = {
-			.c = {0.75, 0, 0},
-		},
+		.m = material::diffuse({0.75, 0.1, 0.1}),
 		.w = 1, .l = L,
 	});
 
-	// smooth metal ball
+	// smoothed metal ball
 	spheres.push_back({
 		.t = {
 			.p = {-0.35, -0.75, 0.2},
 		},
-		.m = {
-			.c = {.9, .9, .9},
-			.smooth = 300,
-		},
+		.m = material::metal({.9, .9, .9}, 300),
 		.r = 0.3,
 	});
 
-	// rough metal ball
+	// dark dielectric ball
 	spheres.push_back({
 		.t = {
 			.p = {0.35, -0.75, 0.2},
 		},
-		.m = {
-			.c = {.9, .9, .9},
-			.smooth = 25,
-		},
+		.m = material::dielectric({.1, .1, .1}, 0.1, 5000),
 		.r = 0.3,
 	});
 
@@ -119,20 +107,17 @@ void setup_scene(){
 	/*
 	rects.push_back({
 		.t = {
-			.p = {0, .99, 0},
+			.p = {0, .9, 0},
 			.y = {0, -1, 0},
 		},
-		.m = {
-			.light = true,
-			.c = {2, 2, 2},
-		},
+		.m = material::light({1, 1, 1}),
 		.w = 0.7, .l = 0.35,
 	});
 	*/
 
 	simple_light({
 		0.7 * (rng::base()*2.0-1.0),
-		0.99,
+		0.9,
 		0.35 * (rng::base()*2.0-1.0),
 	}, {1,1,1});
 }
