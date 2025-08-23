@@ -24,6 +24,8 @@ struct _camera{
 
 	int bounces = 5;
 
+	double time = 0.0, fps = 15.0;
+
 	int threads = 1;
 
 	void get(double X, double Y, ray &r){

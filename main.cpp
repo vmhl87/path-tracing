@@ -19,6 +19,30 @@ void render(int id);
 buffer _buffers[MAX_THREADS-1];
 
 int main(int argc, char *argv[]){
+	if(argc > 3){
+		try{
+			camera.fps = std::stoi(argv[3]);
+
+		}catch(const std::invalid_argument &e){
+			std::cerr << "invalid arg " << e.what() << '\n';
+
+		}catch(const std::out_of_range &e){
+			std::cerr << "out of range " << e.what() << '\n';
+		}
+	}
+
+	if(argc > 2){
+		try{
+			camera.time = (double) std::stoi(argv[2]) / camera.fps;
+
+		}catch(const std::invalid_argument &e){
+			std::cerr << "invalid arg " << e.what() << '\n';
+
+		}catch(const std::out_of_range &e){
+			std::cerr << "out of range " << e.what() << '\n';
+		}
+	}
+
 	setup_camera();
 	camera.t.init();
 	target.init();
