@@ -16,8 +16,6 @@ void setup_camera(){
 
 	camera.spp = 64;
 	camera.sync = 8;
-
-	camera.spp = 256;
 }
 
 color sky(vec d){
@@ -35,8 +33,7 @@ void setup_scene(){
 			.y = {0, 1, 0},
 			.z = {0, 0, 1},
 		},
-		//.m = material::diffuse({1, 1, 1}),
-		.m = material::metal({1, 1, 1}, 0),
+		.m = material::diffuse({1, 1, 1}),
 		.w = 1, .l = 1,
 	});
 
@@ -93,12 +90,12 @@ void setup_scene(){
 		.r = 0.3,
 	});
 
-	// dark dielectric ball
+	// black diffuse ball
 	spheres.push_back({
 		.t = {
 			.p = {0.35, -0.75, 0.2},
 		},
-		.m = material::dielectric({.1, .1, .1}, 0.1, 5000),
+		.m = material::diffuse({.1, .1, .1}),
 		.r = 0.3,
 	});
 
