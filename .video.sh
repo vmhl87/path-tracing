@@ -8,4 +8,4 @@ for ((i=0; i<=$2*$3; i++)); do
 	cp image.bmp .video_frames/$i.bmp
 done
 
-ffmpeg -framerate $3 -i .video_frames/%d.bmp -c:v libx264 -pix_fmt yuv420p render.mp4
+ffmpeg -framerate $3 -i .video_frames/%d.bmp -c:v libx264 -crf 18 -pix_fmt yuv420p render.mp4
