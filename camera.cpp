@@ -86,19 +86,18 @@ struct _target{
 	void write(double progress = 1.0){
 		double exp2 = camera.threads * camera.spp * progress / camera.exposure;
 
-		auto bake = [&] (double v){
-			return 255.0 * pow(v, 1.0/camera.gamma);
-		};
-
 		auto c = [&] (double v) {
-			return (unsigned char) std::max(0, std::min(255,
-						(int) std::floor(bake(v))));
+			double E = std::pow(v, 1.0/camera.gamma);
+			return (unsigned char) std::max(0, std::min(255, (int) std::floor(E*255.0)));
 		};
 
 		for(int i=0; i<camera.w*camera.h; ++i){
-			image[i*3+2] = c(data[i].x/exp2);
-			image[i*3+1] = c(data[i].y/exp2);
-			image[i*3] = c(data[i].z/exp2);
+			color E = data[i]/exp2;
+			E /= (E + vec{1, 1, 1});
+
+			image[i*3+2] = c(E.x);
+			image[i*3+1] = c(E.y);
+			image[i*3] = c(E.z);
 		}
 
 		writeBMP("image.bmp", image, camera.w, camera.h);

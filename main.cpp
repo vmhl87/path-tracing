@@ -142,7 +142,7 @@ void backward_trace(buffer &buf, int x, int y){
 			t.scatter(r);
 
 		}else{
-			r.c *= sky(r.d) * (j ? 1 : 0.5 + rng::base());
+			r.c *= sky(r.d) * (j ? 1 : 0.75 + rng::base()/2.0);
 			camera.set(buf, x, y, r.c);
 			break;
 		}

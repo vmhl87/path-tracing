@@ -4,146 +4,153 @@
 double transform, t2;
 
 void setup_camera(){
-	camera.w = 600;
-	camera.h = 600;
-	camera.c = 400;
+	camera.w = 750;
+	camera.h = 1000;
+	camera.c = 750;
 
-	camera.p = { 0.2, 0, -3 };
-	camera.t.z = { -0.1, 0, 1 };
-	camera.t.y = { -0.1, 1, 0 };
+	camera.p = { 0, 1, -10 };
+	camera.t.z = camera.p * -1;
+	camera.t.y = { 0, 1, 0 };
+	camera.t.init();
+	camera.t.y -= camera.t.x * 0.1;
 
-	// animate
-	transform = std::sin(std::min(2.75,camera.time)*M_PI/2.0/2.75);
-	t2 = std::min(1.0, 4.0-camera.time);
-	camera.p = { 0.2 * (1.1 - transform)/1.1 - 1.2*(1.0-t2), 0, -3 };
-	camera.t.y = { -0.1 * (1.0 - transform), 1, 0 };
-	camera.t.z = { -0.1 * (1.1 - transform)/1.1 + 0.35*(1.0-t2), 0, 1 };
-	camera.p -= camera.t.z * transform * 0.5;
-	camera.w *= 1.5, camera.c *= 1.5;
-	camera.c *= 1.0 + 1.5*(1.0-t2);
-
-	camera.spp = 16;
-	camera.sync = 2;
-	camera.bounces = 5;
-
-	camera.spp = 64;
+	camera.spp = 32;
 	camera.sync = 8;
+	camera.bounces = 8;
+
+	camera.spp = 1024;
 }
 
 color sky(vec d){
-	//return vec{-2,0,0};
-	return vec{1,1,1} * (d.dot({0,-0.5+1.5*t2,0})*0.5+0.5);
-	return vec{1,1,1} * (d.dot({0,1,0})*0.5+0.5);
+	vec sun_dir = (vec{2.6, 2.5, 7}).norm();
+	color sun_color = vec{235, 207, 99} / 255.0;
+	double haze_concentration = 10.0,
+		   haze_falloff = 8.0,
+		   sun_concentration = 90.0,
+		   sun_luminance = 20.0,
+		   haze_fraction = 0.8;
+
+	double dir_frac = d.dot(sun_dir);
+	double haze_raw = std::max(0.0, dir_frac*haze_concentration - haze_concentration + 1.0);
+	double haze_proc = std::pow(haze_raw, haze_falloff);
+	double sun_raw = dir_frac*sun_concentration - sun_concentration + 1.0;
+	double sun_proc = std::pow(std::max(0.0, sun_raw), 2.0) * sun_luminance;
+	double sun_total = std::max(haze_proc * haze_fraction, sun_proc);
+
+	return vec{.31, .68, .91} * (0.5 - d.dot({0,1,0})*0.5) + sun_color * sun_total;
+}
+
+void branch(vec p1, vec p2, double w){
+	vec r = rng::uniform2(), z = (p1-p2).norm();
+
+	rects.push_back({
+		.t = {
+			.p = (p1+p2)/2.0,
+			.y = r,
+			.z = z,
+		},
+		.m = material::dielectric({.75, 2, .75}, .2, 10000),
+		.w = w, .l = p1.dist(p2)/2.0 - .1,
+	});
+
+	rects.push_back({
+		.t = {
+			.p = (p1+p2)/2.0,
+			.y = r.cross(z),
+			.z = z,
+		},
+		.m = material::dielectric({1, .75, .35}, .2, 10000),
+		.w = w/2, .l = p1.dist(p2)/2.0 - .2,
+	});
 }
 
 void setup_scene(){
-	double L = 0.75;
-
-	L = 0.1 + 0.65*t2;
-	double L2 = 0.1 + 0.9*t2;
-	double t3 = (1.0-t2) * M_PI / 2.0;
-
-	// floor
 	rects.push_back({
 		.t = {
-			.p = {0, -1, 0},
-			.y = {0, 1, 0},
-			.z = {-std::sin(t3), 0, std::cos(t3)},
+			.p = {0, -1.5, 0},
 		},
-		//.m = material::diffuse({1, 1, 1}),
-		.m = material::diffuse({.95, .95, .95}),
-		.w = L2, .l = L2,
+		.m = material::dielectric({1, 1, 1}, 0.4, 5000),
+		.w = 500, .l = 500,
 	});
 
-	// ceiling
-	rects.push_back({
-		.t = {
-			.p = {0, 1, 0},
-			.y = {0, -1, 0},
-			.z = {std::sin(t3), 0, std::cos(t3)},
-		},
-		//.m = material::diffuse({1, 1, 1}),
-		.m = material::diffuse({.95, .95, .95}),
-		.w = L2, .l = L2,
-	});
-
-	// left wall
-	rects.push_back({
-		.t = {
-			.p = {-1, 0, 0},
-			.y = {1, 0, 0},
-			.z = {0, std::cos(t3), std::sin(t3)},
-		},
-		.m = material::dielectric({0.1, 0.75, 0.1}, 0.1, 300),
-		.w = L2, .l = L,
-	});
-
-	// back wall
-	rects.push_back({
-		.t = {
-			.p = {0, 0, 1},
-			.y = {0, 0, -1},
-			.z = {std::sin(t3), std::cos(t3), 0},
-		},
-		.m = material::metal({0.2, 0.2, 0.75}, 500),
-		.w = L2, .l = L,
-	});
-
-	// right wall
-	rects.push_back({
-		.t = {
-			.p = {1, 0, 0},
-			.y = {-1, 0, 0},
-			.z = {0, std::cos(t3), -std::sin(t3)},
-		},
-		.m = material::diffuse({0.75, 0.1, 0.1}),
-		.w = L2, .l = L,
-	});
-
-	// smoothed metal ball
 	spheres.push_back({
 		.t = {
-			.p = {-0.35, -0.75, 0.2},
+			.p = {},
 		},
-		.m = material::metal({.9, .9, .9}, 200),
-		.r = 0.3*L2,
+		.m = material::dielectric({0.05, 0.05, 0.125}, 0.1, 1000),
+		.r = 1,
 	});
 
-	// black diffuse ball
-	spheres.push_back({
-		.t = {
-			.p = {0.35, -0.75, 0.2},
-		},
-		.m = material::diffuse({.1, .1, .1}),
-		.r = 0.3*L2,
-	});
+	{
+		//int seed = std::floor(rng::base()*10000);
+		//rng::gen2.seed(seed); std::cout << "seed " << seed << '\n';
+		// 8766
+		// 5103
+		// 7404
+		rng::gen2.seed(7404);
+	};
 
-	// ceiling light - 2 styles
+	{
+		vec p = {2, -1.4, -1}, bp = {-6, 0, 4}, lp = p+bp;
+		double f = M_PI / 3.0, r = bp.mag(), weight = 0.3;
+		double phi = 0;
+		int slices = 6;
 
-	/*
-	rects.push_back({
-		.t = {
-			.p = {0, .9, 0},
-			.y = {0, -1, 0},
-		},
-		.m = material::light({1, 1, 1}),
-		.w = 0.7, .l = 0.35,
-	});
-	*/
+		for(int i=1; i<=slices; ++i){
+			phi += (slices*1.5-i) / slices * f/slices;
+			vec np = p + bp * std::cos(phi) + vec{0, r, 0} * std::sin(phi);
+			np += rng::uniform2() * 0.1 * (slices*0.5+i)/slices;
+			branch(lp, np, (slices-i+1) * weight / slices);
+			lp = np;
+		}
+	};
 
-	double V = L2*(1.1-transform)/1.1;
-	simple_light({
-		0.1,
-		0.9 - 0.2 * transform,
-		0.1,
-	}, {V,V,V});
+	{
+		vec p = {-2, -1.4, 1.8}, bp = {6, 0, -4}, lp = p+bp;
+		double f = M_PI / 3.0, r = bp.mag(), weight = 0.3;
+		double phi = 0;
+		int slices = 6;
 
-	/*
-	double V = L2*(1.1-transform)/1.1;
-	simple_light({
-		0.7 * (rng::base()*2.0-1.0) * (1.05 - transform) / 1.05,
-		0.9 - 0.2 * transform,
-		0.35 * (rng::base()*2.0-1.0) * (1.1 - transform) / 1.1,
-	}, {V,V,V});
-	*/
+		for(int i=1; i<=slices; ++i){
+			phi += (slices*1.5-i) / slices * f/slices;
+			vec np = p + bp * std::cos(phi) + vec{0, r, 0} * std::sin(phi);
+			np += rng::uniform2() * 0.1 * (slices*0.5+i)/slices;
+			branch(lp, np, (slices-i+1) * weight / slices);
+			lp = np;
+		}
+	};
+
+	{
+		vec p = { -50, -2, 200 },
+			y = (camera.p-p).norm(),
+			x = {0, 1, 0},
+			z = x.cross(y) + x;
+
+		rects.push_back({
+			.t = {
+				.p = p,
+				.y = y,
+				.z = z,
+			},
+			.m = material::diffuse({.75, .75, .75}),
+			.w = 30, .l = 30,
+		});
+	};
+
+	{
+		vec p = { -10, -2, 150 },
+			y = (camera.p-p).norm(),
+			x = {0, 1, 0},
+			z = x.cross(y) + x;
+
+		rects.push_back({
+			.t = {
+				.p = p,
+				.y = y,
+				.z = z,
+			},
+			.m = material::diffuse({.5, .5, .6}),
+			.w = 15, .l = 15,
+		});
+	};
 }

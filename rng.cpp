@@ -6,6 +6,7 @@
 
 namespace rng{
 	std::random_device rd;
+	std::default_random_engine gen2(rd());
 	thread_local std::default_random_engine gen(rd());
 	std::uniform_real_distribution<double> uniform_gen(0.0, 1.0);
 	std::normal_distribution<double> gaussian_gen(0.0, 1.0);
@@ -14,8 +15,16 @@ namespace rng{
 		return uniform_gen(gen);
 	}
 
+	inline double base2(){
+		return uniform_gen(gen2);
+	}
+
 	inline double norm(){
 		return gaussian_gen(gen);
+	}
+
+	inline double norm2(){
+		return gaussian_gen(gen2);
 	}
 
 	vec uniform(){
@@ -30,8 +39,24 @@ namespace rng{
 		};
 	}
 
+	vec uniform2(){
+		double u = base2() * 2.0 - 1.0;
+		double phi = base2() * 2.0 * M_PI;
+		double sqrt_1_minus_u2 = sqrt(1.0 - u * u);
+
+		return {
+			sqrt_1_minus_u2 * cos(phi),
+			sqrt_1_minus_u2 * sin(phi),
+			u
+		};
+	}
+
 	vec gaussian(){
 		return uniform() * norm();
+	}
+
+	vec gaussian2(){
+		return uniform2() * norm2();
 	}
 
 #ifdef ignore
