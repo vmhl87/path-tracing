@@ -18,7 +18,7 @@ void setup_camera(){
 	camera.sync = 8;
 	camera.bounces = 8;
 
-	camera.spp = 1024;
+	// camera.spp = 1024;
 }
 
 color sky(vec d){
@@ -65,6 +65,7 @@ void branch(vec p1, vec p2, double w){
 }
 
 void setup_scene(){
+	// ground plane
 	rects.push_back({
 		.t = {
 			.p = {0, -1.5, 0},
@@ -73,6 +74,7 @@ void setup_scene(){
 		.w = 500, .l = 500,
 	});
 
+	// subject sphere
 	spheres.push_back({
 		.t = {
 			.p = {},
@@ -90,6 +92,7 @@ void setup_scene(){
 		rng::gen2.seed(7404);
 	};
 
+	// left plant
 	{
 		vec p = {2, -1.4, -1}, bp = {-6, 0, 4}, lp = p+bp;
 		double f = M_PI / 3.0, r = bp.mag(), weight = 0.3;
@@ -105,6 +108,7 @@ void setup_scene(){
 		}
 	};
 
+	// right plant
 	{
 		vec p = {-2, -1.4, 1.8}, bp = {6, 0, -4}, lp = p+bp;
 		double f = M_PI / 3.0, r = bp.mag(), weight = 0.3;
@@ -120,6 +124,7 @@ void setup_scene(){
 		}
 	};
 
+	// left mountain
 	{
 		vec p = { -50, -2, 200 },
 			y = (camera.p-p).norm(),
@@ -137,6 +142,7 @@ void setup_scene(){
 		});
 	};
 
+	// right mountain
 	{
 		vec p = { -10, -2, 150 },
 			y = (camera.p-p).norm(),

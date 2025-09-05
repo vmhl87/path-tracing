@@ -32,11 +32,17 @@ struct material{
 	}
 
 	static material dielectric(color c, double specular, double smooth){
+		double r = std::min(0.75, std::max(0.25, specular));
+
 		return {
 			.T = DIFFUSE | SPECULAR,
-			.diffuse_color = c,
-			.specular_color = {1, 1, 1},
-			.specular_fract = specular,
+			.diffuse_color = c*(1-specular)/(1-r),
+			.specular_color = {
+				specular/r,
+				specular/r,
+				specular/r,
+			},
+			.specular_fract = r,
 			.smooth = smooth,
 		};
 	}
@@ -70,6 +76,8 @@ vec cosine_lobe(double m, vec n){
 double cosine_dist(double m, vec n, vec v){
 	return std::pow(std::max(0.0, v.dot(n)), m) * (m + 1.0);
 }
+
+vec _sun_dir = (vec{2.6, 2.5, 7}).norm();
 
 struct touch{
 	const material *m;
