@@ -4,7 +4,7 @@
 double transform, t2;
 
 void setup_camera(){
-	camera.w = 400;
+	camera.w = 600;
 	camera.h = 400;
 	camera.c = 600;
 
@@ -14,8 +14,6 @@ void setup_camera(){
 	camera.spp = 128;
 	camera.sync = 32;
 	camera.bounces = 5;
-
-	camera.spp = 1024;
 }
 
 color sky(vec d){
@@ -24,6 +22,16 @@ color sky(vec d){
 }
 
 void setup_scene(){
+	double F = 0;
+
+	for(int i=0; i<camera.time*camera.fps; ++i){
+		if(F < 1.0) F += 0.1;
+		else if(F < 5) F += 1;
+		else if(F < 30) F += 5;
+		else if(F < 100) F += 20;
+		else F += 200;
+	}
+
 	// ground
 	rects.push_back({
 		.t = {
@@ -31,29 +39,28 @@ void setup_scene(){
 			.y = { 0, 1, 0 },
 			.z = { 0, 0, 1 },
 		},
-		.m = material::metal({.75, .75, .75}, 0),
+		.m = material::metal({.75, .75, .75}, F),
 		//.m = material::diffuse({.75, .75, .75}),
 		//.m = material::dielectric({.75, .75, .75}, 0.5, 1000),
 		.w = 100, .l = 100,
 	});
 
-	// light setups
+	// lights
 	
-	bool T = 1;
-
-	if(T) spheres.push_back({
+	spheres.push_back({
 		.t = {
-			.p = {},
+			.p = {-2, 0, 0},
 		},
-		.m = material::light({20, .8, .8}),
+		.m = material::light({17, .68, .68}),
 		.r = .25,
 	});
 
-	if(!T) lights.push_back({
+	lights.push_back({
 		.get = [] (ray &r) {
 			r.c = {5, .2, .2};
 			r.p = rng::uniform() * .25;
 			r.d = (r.p.norm()+rng::uniform()).norm();
+			r.p.x += 2;
 		},
 		.c = [] (vec&) { return color{2.5, .1, .1}; },
 	});

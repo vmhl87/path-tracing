@@ -118,15 +118,13 @@ struct touch{
 			double fract = 0.0;
 
 			vec s1 = (out-in).norm();
-			double f1 = -(in.dot(out));
-			double a1 = std::acos(f1);
-			fract += cosine_dist(m->smooth, n, s1) * std::min(100.0, std::sin(a1/2) / std::sin(a1));
+			double f1 = std::sqrt(0.5 / (1.0 - in.dot(out)));
+			fract += cosine_dist(m->smooth, n, s1) * std::min(100.0, f1);
 
 			vec iv = out - n*2.0*out.dot(n);
 			vec s2 = (iv-in).norm();
-			double f2 = -(in.dot(iv));
-			double a2 = std::acos(f2);
-			fract += cosine_dist(m->smooth, n, s2) * std::min(100.0, std::sin(a2/2) / std::sin(a2));
+			double f2 = std::sqrt(0.5 / (1.0 - in.dot(iv)));
+			fract += cosine_dist(m->smooth, n, s2) * std::min(100.0, f2);
 
 			return lerp(
 				m->diffuse_color*out.dot(n)*2.0*M_PI,
@@ -140,15 +138,13 @@ struct touch{
 			double fract = 0.0;
 
 			vec s1 = (out-in).norm();
-			double f1 = -(in.dot(out));
-			double a1 = std::acos(f1);
-			fract += cosine_dist(m->smooth, n, s1) * std::min(100.0, std::sin(a1/2) / std::sin(a1));
+			double f1 = std::sqrt(0.5 / (1.0 - in.dot(out)));
+			fract += cosine_dist(m->smooth, n, s1) * std::min(100.0, f1);
 
 			vec iv = out - n*2.0*out.dot(n);
 			vec s2 = (iv-in).norm();
-			double f2 = -(in.dot(iv));
-			double a2 = std::acos(f2);
-			fract += cosine_dist(m->smooth, n, s2) * std::min(100.0, std::sin(a2/2) / std::sin(a2));
+			double f2 = std::sqrt(0.5 / (1.0 - in.dot(iv)));
+			fract += cosine_dist(m->smooth, n, s2) * std::min(100.0, f2);
 
 			return m->specular_color*fract/2.0;
 		}

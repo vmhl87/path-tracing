@@ -165,6 +165,8 @@ void forward_trace(buffer &buf, const light &l){
 
 		for(int j=0; j<camera.bounces; ++j){
 			if(hit(r, t)){
+				r.c *= std::min(30.0, 0.5 / -t.n.dot(r.d));
+
 				ray R; touch T;
 				R.p = t.p; R.d = (camera.p-t.p).norm();
 				if(!hit(R, T) || T.d*T.d > camera.p.distsq(R.p)){
