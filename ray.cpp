@@ -74,7 +74,8 @@ vec cosine_lobe(double m, vec n){
 }
 
 double cosine_dist(double m, vec n, vec v){
-	return std::pow(std::max(0.0, v.dot(n)), m) * (m + 1.0);
+	//return std::pow(std::max(0.0, v.dot(n)), m) * (m + 1.0);
+	return std::pow(std::abs(v.dot(n)), m) * (m + 1.0);
 }
 
 vec _sun_dir = (vec{2.6, 2.5, 7}).norm();
@@ -112,20 +113,44 @@ struct touch{
 
 	color scatter(vec in, vec out){
 		if((m->T & material::DIFFUSE) && (m->T & material::SPECULAR)){
-			vec s1 = (out-in).norm(), s2 = (out-n*2.0*out.dot(n)-in).norm();
-			double fract = cosine_dist(m->smooth, n, s1) + cosine_dist(m->smooth, n, s2);
+			// TODO optimize this sometime
+
+			double fract = 0.0;
+
+			vec s1 = (out-in).norm();
+			double f1 = -(in.dot(out));
+			double a1 = std::acos(f1);
+			fract += cosine_dist(m->smooth, n, s1) * std::min(100.0, std::sin(a1/2) / std::sin(a1));
+
+			vec iv = out - n*2.0*out.dot(n);
+			vec s2 = (iv-in).norm();
+			double f2 = -(in.dot(iv));
+			double a2 = std::acos(f2);
+			fract += cosine_dist(m->smooth, n, s2) * std::min(100.0, std::sin(a2/2) / std::sin(a2));
+
 			return lerp(
 				m->diffuse_color*out.dot(n)*2.0*M_PI,
-				m->specular_color*fract * std::min(2.0, 0.5 / -in.dot(n)),
+				m->specular_color*fract/2.0,
 				m->specular_fract);
 
 		}else if(m->T & material::DIFFUSE){
 			return m->diffuse_color*out.dot(n)*2.0*M_PI;
 
 		}else if(m->T & material::SPECULAR){
-			vec s1 = (out-in).norm(), s2 = (out-n*2.0*out.dot(n)-in).norm();
-			double fract = cosine_dist(m->smooth, n, s1) + cosine_dist(m->smooth, n, s2);
-			return m->specular_color*fract * std::min(3.0, 0.5 / -in.dot(n));
+			double fract = 0.0;
+
+			vec s1 = (out-in).norm();
+			double f1 = -(in.dot(out));
+			double a1 = std::acos(f1);
+			fract += cosine_dist(m->smooth, n, s1) * std::min(100.0, std::sin(a1/2) / std::sin(a1));
+
+			vec iv = out - n*2.0*out.dot(n);
+			vec s2 = (iv-in).norm();
+			double f2 = -(in.dot(iv));
+			double a2 = std::acos(f2);
+			fract += cosine_dist(m->smooth, n, s2) * std::min(100.0, std::sin(a2/2) / std::sin(a2));
+
+			return m->specular_color*fract/2.0;
 		}
 
 		return m->light_color;
